@@ -9,6 +9,7 @@ interface FileItem {
 const files = ref<FileItem[]>([]);
 const folderName = ref(''); // Folder name
 const showModal = ref(false);  // 控制模态框的显示
+const currentPath = ref('/')
 
 const openModal = () => {
   showModal.value = true;
@@ -20,11 +21,17 @@ const closeModal = () => {
   folderName.value = '';
 };
 
-const fetchFiles = async () => {
-  const res = await axios.get<FileItem[]>('/api/files');
-  files.value = res.data;
-  console.log(files.value);
-};
+const fetchFiles = async (path: string = '/') => {
+  try {
+    const res = await axios.get<FileItem[]>('/api/files', {
+      params: { path }
+    })
+    files.value = res.data
+    console.log('当前路径:', path, '文件列表:', files.value)
+  } catch (error) {
+    console.error('获取文件失败:', error)
+  }
+}
 
 const handleUpload = async (event: Event) => {
   const input = event.target as HTMLInputElement;
@@ -43,7 +50,7 @@ const handleUpload = async (event: Event) => {
       'Content-Type': 'multipart/form-data',
     }
   });
-  await fetchFiles();
+  await fetchFiles(currentPath.value);
 };
 
 const createFolder = async (event: Event) => {
@@ -53,8 +60,34 @@ const createFolder = async (event: Event) => {
   }
   const response = await axios.post('/api/createFolder', { folderName: folderName.value });
   console.log(response.data.message);
-  fetchFiles();
+  fetchFiles(currentPath.value);
   closeModal();
+}
+
+const handleItemClick = async (item: FileItem) => {
+  if (item.type == "folder") {
+    openFolder(item);
+  }else if (item.type == 'file') {
+    previewFile(item);
+  }
+}
+
+const openFolder = async (item: FileItem) => {
+  currentPath.value += `${item.name}/`;
+  fetchFiles(currentPath.value);
+}
+
+const previewFile = async (item: FileItem) => {
+
+}
+
+const back = () => {
+  if (currentPath.value === '/' || !currentPath.value) return;
+  const parts = currentPath.value.split('/').filter(Boolean);
+  parts.pop();
+  currentPath.value = '/';
+  currentPath.value = '/' + parts.join('/') + (parts.length ? '/' : '');
+  fetchFiles(currentPath.value);
 }
 
 // function used to display icon for each file type
@@ -72,4 +105,4 @@ const getFileIcon = (filename: string): string => {
   return 'fa-file'; // 默认图标
 };
 
-export { files, folderName, showModal, handleUpload, fetchFiles, createFolder, getFileIcon, openModal, closeModal }
+export { files, folderName, showModal, currentPath, handleUpload, fetchFiles, createFolder, getFileIcon, openModal, closeModal, back, handleItemClick }

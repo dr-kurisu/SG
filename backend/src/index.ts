@@ -17,11 +17,11 @@ const storage = multer.diskStorage({
     // File name config
     filename: (req, file, cb) => {
       const decodedFileName = decodeURIComponent(file.originalname);  // 解码 解决中文乱码
-      const fileParts = decodedFileName.split('.'); // 将文件名和扩展名分开
-      const name = fileParts.slice(0, -1).join('.');  // 获取文件名部分
-      const extension = fileParts[fileParts.length - 1];  // 获取扩展名
+      const fileParts = decodedFileName.split('.');
+      const name = fileParts.slice(0, -1).join('.');
+      const extension = fileParts[fileParts.length - 1];
       const newFileName = `${name}-${Date.now()}.${extension}`; // 插入时间戳并重新组合文件名
-      cb(null, newFileName);  // 返回新的文件名
+      cb(null, newFileName);
     }
 });
 
@@ -36,7 +36,8 @@ app.use(express.json({ limit: '50mb' }));
 
 app.get('/api/files', (req, res) => {
   try {
-    const entries = fs.readdirSync(uploadDir, { withFileTypes: true });
+    const path = req.query.path as string || '/';
+    const entries = fs.readdirSync(uploadDir + path, { withFileTypes: true });
 
     const result = entries.map((entry) => ({
       name: entry.name,

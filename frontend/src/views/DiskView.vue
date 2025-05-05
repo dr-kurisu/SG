@@ -50,7 +50,21 @@
       </div>
     </div>
 
-
+    <!-- -->
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center space-x-4">
+        <button
+          @click="back"
+          :disabled="currentPath === '/'"
+          class="text-sm text-blue-600 hover:underline disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+        <i class="fas fa-arrow-left mr-1"></i> 返回
+        </button>
+        <div class="text-gray-600 text-sm">
+          <!-- LabMem001: {{ currentPath.replace(/^\//, '') }} -->
+        </div>
+      </div>
+    </div>
     <!-- 文件列表容器 -->
     <div class="bg-gray-100 rounded-lg shadow-inner p-6 w-full min-h-[60vh]">
       <h2 class="text-xl font-bold mb-4">📁 文件列表</h2>
@@ -59,6 +73,7 @@
         <li
           v-for="item in files"
           :key="item.name"
+          @click="handleItemClick(item)"
           class="flex items-center justify-between bg-white px-4 py-3 rounded-md hover:bg-gray-50 transition"
         >
         <div class="flex items-center space-x-2">
@@ -68,12 +83,12 @@
         </li>
       </ul>
       <div v-else class="text-gray-500 italic">暂无文件</div>
-      </div>
     </div>
+  </div>
 </template>
 
 <script lang="ts" setup>
-  import { files, folderName, showModal, fetchFiles, handleUpload, openModal, closeModal, getFileIcon, createFolder } from '../Storage/cloudstorage'
+  import { files, folderName, showModal, currentPath, fetchFiles, handleUpload, openModal, closeModal, getFileIcon, createFolder, handleItemClick, back } from '../Storage/cloudstorage'
   import { onMounted } from 'vue';
   onMounted(fetchFiles);
 </script>
