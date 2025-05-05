@@ -64,13 +64,13 @@ const handleUpload = async (event: Event) => {
 
   const formData = new FormData();
   formData.append('file', file, encodeURIComponent(file.name));
-
-  await axios.post('/api/upload', formData, {
+  await axios.post(`/api/upload?path=${encodeURIComponent(currentPath.value)}`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     }
   });
   await fetchFiles(currentPath.value);
+  input.value = '';
 };
 
 const createFolder = async (event: Event) => {

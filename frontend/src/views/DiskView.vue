@@ -32,7 +32,7 @@
     <div v-if="showModal" class="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
       <div class="bg-white p-6 rounded-lg shadow-lg w-96">
       <!-- 模态框标题 -->
-        <h3 class="text-xl font-semibold mb-4">新建文件</h3>
+        <h3 class="text-xl font-semibold mb-4 select-none">新建文件</h3>
         <!-- 文件名输入框 -->
         <div class="mb-4">
           <input 
@@ -50,7 +50,7 @@
       </div>
     </div>
 
-    <!-- -->
+    <!-- 操作栏 -->
     <div class="flex items-center justify-between mb-2">
       <div class="flex items-center space-x-4">
         <button
@@ -65,15 +65,27 @@
         >
           <i class="fas fa-redo mr-1"></i>
         </button>
-        <div class="text-gray-600 text-sm">
-          LabMem001: {{ currentPath.replace(/^\//, '') }}
+        <div class="text-gray-600 text-sm flex items-center space-x-1 select-none">
+          <span class="cursor-pointer text-blue-600 hover:underline" @click="goRoot">LabMem001:</span>
+          <template v-for="(part, index) in pathParts" :key="index">
+            <span class="mx-1 text-gray-400">/</span>
+            <span
+              class="cursor-pointer text-blue-600 hover:underline select-none"
+              @click="goTo(index)"
+            >
+              {{ part }}
+            </span>
+          </template>
         </div>
       </div>
     </div>
+    
     <!-- 文件列表容器 -->
-    <div class="bg-gray-100 rounded-lg shadow-inner p-6 w-full min-h-[60vh]">
-      <h2 class="text-xl font-bold mb-4">📁 文件列表</h2>
-
+    <div class="bg-gray-100 rounded-lg shadow-inner p-6 w-full min-h-[70vh]">
+      <h2 class="text-2xl font-semibold text-gray-700 mb-4 flex items-center space-x-2 select-none">
+        <i class="fas fa-folder text-yellow-500"></i>
+        <span>Future Badget Lab</span>
+      </h2>
       <ul v-if="files.length" class="space-y-3">
         <li
           v-for="item in files"
@@ -87,13 +99,30 @@
         </div>
         </li>
       </ul>
-      <div v-else class="text-gray-500 italic">暂无文件</div>
+      <div v-else class="text-gray-500 italic select-none">暂无文件</div>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
   import { files, folderName, showModal, currentPath, fetchFiles, handleUpload, openModal, refresh, closeModal, getFileIcon, createFolder, handleItemClick, back } from '../Storage/cloudstorage'
-  import { onMounted } from 'vue';
+  import { onMounted, computed } from 'vue';
+  const pathParts = computed(() => currentPath.value.split('/').filter(Boolean))
+  const goTo = (index: number) => {
+    const newPath = '/' + pathParts.value.slice(0, index + 1).join('/') + '/'
+    if (newPath != currentPath.value) {
+      currentPath.value = newPath
+      fetchFiles(newPath)
+    }
+    // 刷新文件
+  }
+
+  const goRoot = () => {
+    if (currentPath.value != '/') {
+    currentPath.value = '/'
+    fetchFiles(currentPath.value)
+    }
+  }
+
   onMounted(fetchFiles);
 </script>

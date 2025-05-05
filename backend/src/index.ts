@@ -12,7 +12,12 @@ const uploadDir = path.join(__dirname, '../uploads')
 const storage = multer.diskStorage({
     // File storage path
     destination(req, file, cb) {
-        cb(null, uploadDir)
+      const rawPath = typeof req.query.path === 'string' ? req.query.path : '';
+      const relativePath = decodeURIComponent(rawPath).replace(/\.\./g, ''); // 防目录穿越
+      console.log(relativePath)
+      const fullPath = path.join(uploadDir, relativePath);
+      fs.mkdirSync(fullPath, { recursive: true }); // 确保目录存在
+      cb(null, fullPath);
     },
     // File name config
     filename: (req, file, cb) => {
@@ -37,7 +42,8 @@ app.use(express.json({ limit: '50mb' }));
 app.get('/api/files', (req, res) => {
   try {
     const path = req.query.path as string || '/';
-    const entries = fs.readdirSync(uploadDir + path, { withFileTypes: true });
+    const safePath = decodeURIComponent(path).replace(/\.\./g, ''); // 防止目录穿越
+    const entries = fs.readdirSync(uploadDir + safePath, { withFileTypes: true });
 
     const result = entries.map((entry) => ({
       name: entry.name,
@@ -51,7 +57,7 @@ app.get('/api/files', (req, res) => {
   }
 });
 
-app.post('/api/upload', upload.single('file'), (req: Request, res: Response) => {
+app.post('/api/upload',upload.single('file'), (req: Request, res: Response) => {
   // file 是上传文件的字段名
   if (!req.file) {
     res.status(400).send('No file uploaded')
