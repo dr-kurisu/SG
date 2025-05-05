@@ -55,13 +55,18 @@
       <div class="flex items-center space-x-4">
         <button
           @click="back"
-          :disabled="currentPath === '/'"
-          class="text-sm text-blue-600 hover:underline disabled:opacity-40 disabled:cursor-not-allowed"
+          class="text-sm text-blue-600 hover:scale-95 active:scale-75 transition-transform duration-40"
         >
-        <i class="fas fa-arrow-left mr-1"></i> 返回
+          <i class="fas fa-arrow-left mr-1"></i>返回
+        </button>
+        <button
+          @click="refresh"
+          class="text-sm text-blue-600 hover:scale-95 active:rotate-90 transition-transform duration-40"
+        >
+          <i class="fas fa-redo mr-1"></i>
         </button>
         <div class="text-gray-600 text-sm">
-          <!-- LabMem001: {{ currentPath.replace(/^\//, '') }} -->
+          LabMem001: {{ currentPath.replace(/^\//, '') }}
         </div>
       </div>
     </div>
@@ -88,7 +93,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { files, folderName, showModal, currentPath, fetchFiles, handleUpload, openModal, closeModal, getFileIcon, createFolder, handleItemClick, back } from '../Storage/cloudstorage'
+  import { files, folderName, showModal, currentPath, fetchFiles, handleUpload, openModal, refresh, closeModal, getFileIcon, createFolder, handleItemClick, back } from '../Storage/cloudstorage'
   import { onMounted } from 'vue';
   onMounted(fetchFiles);
 </script>

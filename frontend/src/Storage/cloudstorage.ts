@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 import axios from 'axios';
+import Swal from 'sweetalert2'
 
 interface FileItem {
   name: string;
@@ -29,10 +30,29 @@ const fetchFiles = async (path: string = '/') => {
     files.value = res.data
     console.log('当前路径:', path, '文件列表:', files.value)
   } catch (error) {
+    Swal.fire({
+      icon: 'error',
+      title: '错误',
+      text: '获取文件失败，请稍后再试。',
+      showConfirmButton: false,  // 显示确认按钮
+      timer: 1200,  // 自动关闭时间
+    })
     console.error('获取文件失败:', error)
   }
 }
 
+// button adaptor
+const refresh = async(event: Event) => {
+  fetchFiles(currentPath.value);
+  Swal.fire({
+    icon: 'success',
+    title: '',
+    text: '刷新成功',
+    showConfirmButton: false,  // 显示确认按钮
+    timer: 1000,  // 自动关闭时间
+  })
+}
+// handling upload of files
 const handleUpload = async (event: Event) => {
   const input = event.target as HTMLInputElement;
   if (input.files == null) {
@@ -82,7 +102,16 @@ const previewFile = async (item: FileItem) => {
 }
 
 const back = () => {
-  if (currentPath.value === '/' || !currentPath.value) return;
+  if (currentPath.value === '/' || !currentPath.value) {
+    Swal.fire({
+      icon: 'warning',
+      title: '',
+      text: '根目录无法回退',
+      showConfirmButton: false,  // 显示确认按钮
+      timer: 1000,  // 自动关闭时间
+    })
+    return;
+  }
   const parts = currentPath.value.split('/').filter(Boolean);
   parts.pop();
   currentPath.value = '/';
@@ -105,4 +134,4 @@ const getFileIcon = (filename: string): string => {
   return 'fa-file'; // 默认图标
 };
 
-export { files, folderName, showModal, currentPath, handleUpload, fetchFiles, createFolder, getFileIcon, openModal, closeModal, back, handleItemClick }
+export { files, folderName, showModal, currentPath, handleUpload, fetchFiles, createFolder, getFileIcon, openModal, closeModal, back, handleItemClick, refresh }
