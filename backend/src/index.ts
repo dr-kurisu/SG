@@ -14,7 +14,6 @@ const storage = multer.diskStorage({
     destination(req, file, cb) {
       const rawPath = typeof req.query.path === 'string' ? req.query.path : '';
       const relativePath = decodeURIComponent(rawPath).replace(/\.\./g, ''); // 防目录穿越
-      console.log(relativePath)
       const fullPath = path.join(uploadDir, relativePath);
       fs.mkdirSync(fullPath, { recursive: true }); // 确保目录存在
       cb(null, fullPath);
@@ -43,12 +42,18 @@ app.get('/api/files', (req, res) => {
   try {
     const path = req.query.path as string || '/';
     const safePath = decodeURIComponent(path).replace(/\.\./g, ''); // 防止目录穿越
-    const entries = fs.readdirSync(uploadDir + safePath, { withFileTypes: true });
+    const fullDir = uploadDir + safePath;
+    const entries = fs.readdirSync(fullDir, { withFileTypes: true });
 
-    const result = entries.map((entry) => ({
-      name: entry.name,
-      type: entry.isDirectory() ? 'folder' : 'file',
-    }));
+    const result = entries.map((entry) => {
+      const fullPath = require('path').join(fullDir, entry.name);
+      const stats = fs.statSync(fullPath);
+      return {
+        name: entry.name,
+        type: entry.isDirectory() ? 'folder' : 'file',
+        modifiedTime: stats.mtime.toISOString(),
+      };
+    });
 
     res.json(result);
   } catch (err) {
@@ -70,13 +75,14 @@ app.post('/api/upload',upload.single('file'), (req: Request, res: Response) => {
 })
 
 app.post('/api/createFolder', (req: Request, res: Response) => {
-  const { folderName } = req.body;
+  const { folderName, currentPath } = req.body;
   if (!folderName) {
     res.status(400).send('Folder name is required');
     return
   }
   const folderNameSanitized = folderName.replace(/[<>:"/\\|?*]/g, '');  // 清理非法字符
-  const folderPath = path.join(uploadDir, folderNameSanitized);
+  const relativePath = decodeURIComponent(currentPath).replace(/\.\./g, ''); // 防目录穿越
+  const folderPath = path.join(uploadDir, relativePath, folderNameSanitized);
   // 检查文件夹名称重复
   if (fs.existsSync(folderPath)) {
     res.status(400).send('Folder already exists');

@@ -51,7 +51,7 @@
     </div>
 
     <!-- 操作栏 -->
-    <div class="flex items-center justify-between mb-2">
+    <div class="flex items-center justify-between mb-2 select-none">
       <div class="flex items-center space-x-4">
         <button
           @click="back"
@@ -65,12 +65,12 @@
         >
           <i class="fas fa-redo mr-1"></i>
         </button>
-        <div class="text-gray-600 text-sm flex items-center space-x-1 select-none">
+        <div class="text-gray-600 text-sm flex items-center space-x-1">
           <span class="cursor-pointer text-blue-600 hover:underline" @click="goRoot">LabMem001:</span>
           <template v-for="(part, index) in pathParts" :key="index">
             <span class="mx-1 text-gray-400">/</span>
             <span
-              class="cursor-pointer text-blue-600 hover:underline select-none"
+              class="cursor-pointer text-blue-600 hover:underline"
               @click="goTo(index)"
             >
               {{ part }}
@@ -86,17 +86,51 @@
         <i class="fas fa-folder text-yellow-500"></i>
         <span>Future Badget Lab</span>
       </h2>
+      <!-- 表头 -->
+      <div class="flex text-sm font-medium text-gray-700 mb-1 bg-gray-50 border-b border-gray-300 select-none p-3 rounded-md">
+      <!-- 文件名列 -->
+      <div class="w-3/4 flex items-center group" @click="sortFiles('name')">
+        <div class="flex items-center w-full pr-4 hover:bg-gray-200 rounded transition-colors duration-200 px-3 py-1.5">
+          
+          <!-- 文件名 + 箭头 -->
+          <div class="flex items-center space-x-2">
+            <span class="font-semibold">文件名</span>
+            <i v-if="sortBy === 'name'" 
+              :class="['fas text-xs text-gray-600', sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down']"></i>
+            <i v-else class="fas fa-sort text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+          </div>
+          
+        </div>
+        <div class="h-4 w-px bg-gray-300 ml-4"></div>
+      </div>
+
+        <!-- 修改时间列 -->
+        <div class="w-1/4 flex items-center group" @click="sortFiles('modifiedTime')">
+          <div class="flex items-center w-full pr-4 hover:bg-gray-200 rounded transition-colors duration-200 px-3 py-1.5">
+            <div class="flex items-center space-x-2">
+              <span class="font-semibold">修改时间</span>
+              <i v-if="sortBy === 'modifiedTime'" 
+                :class="['fas text-xs text-gray-600', sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down']"></i>
+              <i v-else class="fas fa-sort text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+
+      <!-- List -->
       <ul v-if="files.length" class="space-y-3">
         <li
           v-for="item in files"
           :key="item.name"
           @click="handleItemClick(item)"
-          class="flex items-center justify-between bg-white px-4 py-3 rounded-md hover:bg-gray-50 transition"
+          class="flex items-center justify-between bg-white px-4 py-3 rounded-md hover:bg-gray-200 transition"
         >
-        <div class="flex items-center space-x-2">
-          <i :class="['fas', item.type === 'folder' ? 'fa-folder' : getFileIcon(item.name), 'text-gray-500']"></i>
-          <span class="truncate">{{ item.name.replace(/-(.*?)\./, '.') }}</span>
-        </div>
+          <div class="w-3/4 items-center space-x-2">
+            <i :class="['fas', item.type === 'folder' ? 'fa-folder' : getFileIcon(item.name), 'text-gray-500']"></i>
+            <span class="truncate">{{ item.name.replace(/-\w+(?=\.\w+$)/, '') }}</span>
+          </div>
+          <span class="w-1/4 text-sm text-gray-500 ml-4">{{ formatDate(item.modifiedTime) }}</span>
         </li>
       </ul>
       <div v-else class="text-gray-500 italic select-none">暂无文件</div>
@@ -106,7 +140,8 @@
 
 <script lang="ts" setup>
   import { files, folderName, showModal, currentPath, fetchFiles, handleUpload, openModal, refresh, closeModal, getFileIcon, createFolder, handleItemClick, back } from '../Storage/cloudstorage'
-  import { onMounted, computed } from 'vue';
+  import type { FileItem } from '../Storage/cloudstorage';
+  import { onMounted, computed, ref } from 'vue';
   const pathParts = computed(() => currentPath.value.split('/').filter(Boolean))
   const goTo = (index: number) => {
     const newPath = '/' + pathParts.value.slice(0, index + 1).join('/') + '/'
@@ -122,6 +157,44 @@
     currentPath.value = '/'
     fetchFiles(currentPath.value)
     }
+  }
+
+  const formatDate = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleString();  // 可以改成其它格式，比如 `toLocaleDateString()` 或自定义格式
+  }
+
+  const sortBy = ref('name');
+  const sortOrder = ref('asc');
+  const sortFiles = (field: string) => {
+    if (sortBy.value === field) {
+      sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortBy.value = field;
+      sortOrder.value = 'asc';
+    }
+    console.log(sortOrder);
+
+    files.value.sort((a: FileItem, b: FileItem) => {
+        let compareA, compareB;
+
+        if (field === 'name') {
+          compareA = a.name.toLowerCase();
+          compareB = b.name.toLowerCase();
+        } else if (field === 'modifiedTime') {
+          compareA = new Date(a.modifiedTime).getTime();
+          compareB = new Date(b.modifiedTime).getTime();
+        }else {
+          compareA = "";
+          compareB = "";
+        }
+
+        if (sortOrder.value === 'asc') {
+          return compareA > compareB ? 1 : compareA < compareB ? -1 : 0;
+        } else {
+          return compareA < compareB ? 1 : compareA > compareB ? -1 : 0;
+        }
+      }); 
   }
 
   onMounted(fetchFiles);

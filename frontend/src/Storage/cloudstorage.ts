@@ -5,6 +5,7 @@ import Swal from 'sweetalert2'
 interface FileItem {
   name: string;
   type: 'file' | 'folder';
+  modifiedTime: string;
 }
 
 const files = ref<FileItem[]>([]);
@@ -28,7 +29,7 @@ const fetchFiles = async (path: string = '/') => {
       params: { path }
     })
     files.value = res.data
-    console.log('当前路径:', path, '文件列表:', files.value)
+    console.log('当前路径:', path, '文件列表:', files.value.map(v => v.name));
   } catch (error) {
     Swal.fire({
       icon: 'error',
@@ -78,7 +79,7 @@ const createFolder = async (event: Event) => {
     alert('请输入文件夹名称');
     return;
   }
-  const response = await axios.post('/api/createFolder', { folderName: folderName.value });
+  const response = await axios.post('/api/createFolder', { folderName: folderName.value, currentPath: currentPath.value });
   console.log(response.data.message);
   fetchFiles(currentPath.value);
   closeModal();
