@@ -82,27 +82,27 @@
     
     <!-- 文件列表容器 -->
     <div class="bg-gray-100 rounded-lg shadow-inner p-6 w-full min-h-[70vh]">
+
       <h2 class="text-2xl font-semibold text-gray-700 mb-4 flex items-center space-x-2 select-none">
         <i class="fas fa-folder text-yellow-500"></i>
         <span>Future Badget Lab</span>
       </h2>
+
       <!-- 表头 -->
       <div class="flex text-sm font-medium text-gray-700 mb-1 bg-gray-50 border-b border-gray-300 select-none p-3 rounded-md">
-      <!-- 文件名列 -->
-      <div class="w-3/4 flex items-center group" @click="sortFiles('name')">
-        <div class="flex items-center w-full pr-4 hover:bg-gray-200 rounded transition-colors duration-200 px-3 py-1.5">
-          
-          <!-- 文件名 + 箭头 -->
-          <div class="flex items-center space-x-2">
-            <span class="font-semibold">文件名</span>
-            <i v-if="sortBy === 'name'" 
-              :class="['fas text-xs text-gray-600', sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down']"></i>
-            <i v-else class="fas fa-sort text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+        <!-- 文件名列 -->
+        <div class="w-3/4 flex items-center group" @click="sortFiles('name')">
+          <div class="flex items-center w-full pr-4 hover:bg-gray-200 rounded transition-colors duration-200 px-3 py-1.5">
+            <div class="flex items-center space-x-2">
+              <span class="font-semibold">文件名</span>
+              <i v-if="sortBy === 'name'" 
+                :class="['fas text-xs text-gray-600', sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down']"></i>
+              <i v-else class="fas fa-sort text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+            </div>
           </div>
-          
         </div>
-        <div class="h-4 w-px bg-gray-300 ml-4"></div>
-      </div>
+        
+        <div class="w-px flex item-center bg-gray-300 mx-2"></div>
 
         <!-- 修改时间列 -->
         <div class="w-1/4 flex items-center group" @click="sortFiles('modifiedTime')">
@@ -113,9 +113,9 @@
                 :class="['fas text-xs text-gray-600', sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down']"></i>
               <i v-else class="fas fa-sort text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
             </div>
-            
           </div>
         </div>
+
       </div>
 
       <!-- List -->
@@ -134,6 +134,7 @@
         </li>
       </ul>
       <div v-else class="text-gray-500 italic select-none">暂无文件</div>
+
     </div>
   </div>
 </template>

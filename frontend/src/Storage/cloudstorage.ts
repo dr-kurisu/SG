@@ -2,7 +2,7 @@ import { ref } from 'vue';
 import axios from 'axios';
 import Swal from 'sweetalert2'
 
-interface FileItem {
+export interface FileItem {
   name: string;
   type: 'file' | 'folder';
   modifiedTime: string;
@@ -51,27 +51,52 @@ const refresh = async(event: Event) => {
     text: '刷新成功',
     showConfirmButton: false,  // 显示确认按钮
     timer: 1000,  // 自动关闭时间
-  })
+  });
 }
 // handling upload of files
 const handleUpload = async (event: Event) => {
   const input = event.target as HTMLInputElement;
   if (input.files == null) {
-    alert("The selected file is null");
+    Swal.fire({
+      icon: 'error',
+      title: '上传错误',
+      text: '请上传合法文件',
+      showConfirmButton: true,
+      timer: 1000,
+    });
     return;
   }
   const file = input.files[0];
-  if (!input.files || input.files.length === 0) return;
+  if (!input.files || input.files.length === 0) {
+    Swal.fire({
+      icon: 'error',
+      title: '上传错误',
+      text: '请上传合法文件',
+      showConfirmButton: true,
+      timer: 1000,
+    });
+    return;
+  }
 
-  const formData = new FormData();
-  formData.append('file', file, encodeURIComponent(file.name));
-  await axios.post(`/api/upload?path=${encodeURIComponent(currentPath.value)}`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    }
-  });
-  await fetchFiles(currentPath.value);
-  input.value = '';
+  try {
+    const formData = new FormData();
+    formData.append('file', file, encodeURIComponent(file.name));
+    await axios.post(`/api/upload?path=${encodeURIComponent(currentPath.value)}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      }
+    });
+    await fetchFiles(currentPath.value);
+    input.value = '';
+  }catch(error) {
+    const message = (error as Error).message || error?.toString?.() || '未知错误';
+    Swal.fire({
+      icon: 'error',
+      title: '上传失败',
+      text: message,
+      showConfirmButton: true,
+    });
+  }
 };
 
 const createFolder = async (event: Event) => {
