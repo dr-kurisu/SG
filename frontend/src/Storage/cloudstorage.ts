@@ -2,6 +2,7 @@ import { ref } from 'vue';
 import axios from 'axios';
 import Swal from 'sweetalert2'
 
+
 export interface FileItem {
   name: string;
   type: 'file' | 'folder';
@@ -11,7 +12,7 @@ export interface FileItem {
 const files = ref<FileItem[]>([]);
 const folderName = ref(''); // Folder name
 const showModal = ref(false);  // 控制模态框的显示
-const currentPath = ref('/')
+const currentPath = ref('/');
 
 const openModal = () => {
   showModal.value = true;
@@ -110,41 +111,6 @@ const createFolder = async (event: Event) => {
   closeModal();
 }
 
-const handleItemClick = async (item: FileItem) => {
-  if (item.type == "folder") {
-    openFolder(item);
-  }else if (item.type == 'file') {
-    previewFile(item);
-  }
-}
-
-const openFolder = async (item: FileItem) => {
-  currentPath.value += `${item.name}/`;
-  fetchFiles(currentPath.value);
-}
-
-const previewFile = async (item: FileItem) => {
-
-}
-
-const back = () => {
-  if (currentPath.value === '/' || !currentPath.value) {
-    Swal.fire({
-      icon: 'warning',
-      title: '',
-      text: '根目录无法回退',
-      showConfirmButton: false,  // 显示确认按钮
-      timer: 1000,  // 自动关闭时间
-    })
-    return;
-  }
-  const parts = currentPath.value.split('/').filter(Boolean);
-  parts.pop();
-  currentPath.value = '/';
-  currentPath.value = '/' + parts.join('/') + (parts.length ? '/' : '');
-  fetchFiles(currentPath.value);
-}
-
 // function used to display icon for each file type
 const getFileIcon = (filename: string): string => {
   const ext = filename.split('.').pop()?.toLowerCase() || '';
@@ -160,4 +126,4 @@ const getFileIcon = (filename: string): string => {
   return 'fa-file'; // 默认图标
 };
 
-export { files, folderName, showModal, currentPath, handleUpload, fetchFiles, createFolder, getFileIcon, openModal, closeModal, back, handleItemClick, refresh }
+export { files, folderName, showModal, currentPath, handleUpload, fetchFiles, createFolder, getFileIcon, openModal, closeModal, refresh }

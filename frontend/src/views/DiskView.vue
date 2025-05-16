@@ -89,7 +89,7 @@
       </h2>
 
       <!-- 表头 -->
-      <div class="flex text-sm font-medium text-gray-700 mb-1 bg-gray-50 border-b border-gray-300 select-none p-3 rounded-md">
+      <div class="flex text-sm font-medium text-gray-700 mb-1 bg-gray-50 border-b border-gray-300 select-none p-1.5 rounded-md">
         <!-- 文件名列 -->
         <div class="w-3/4 flex items-center group" @click="sortFiles('name')">
           <div class="flex items-center w-full pr-4 hover:bg-gray-200 rounded transition-colors duration-200 px-3 py-1.5">
@@ -140,17 +140,22 @@
 </template>
 
 <script lang="ts" setup>
-  import { files, folderName, showModal, currentPath, fetchFiles, handleUpload, openModal, refresh, closeModal, getFileIcon, createFolder, handleItemClick, back } from '../Storage/cloudstorage'
+  import { files, folderName, showModal, currentPath, fetchFiles, handleUpload, openModal, refresh, closeModal, getFileIcon, createFolder } from '../Storage/cloudstorage'
   import type { FileItem } from '../Storage/cloudstorage';
+  import { useRouter, useRoute, onBeforeRouteUpdate } from 'vue-router';
   import { onMounted, computed, ref } from 'vue';
-  const pathParts = computed(() => currentPath.value.split('/').filter(Boolean))
+  import Swal from 'sweetalert2'
+
+  const router = useRouter();
+  const route = useRoute();
+
+  const pathParts = computed(() => currentPath.value.split('/').filter(Boolean));
   const goTo = (index: number) => {
     const newPath = '/' + pathParts.value.slice(0, index + 1).join('/') + '/'
     if (newPath != currentPath.value) {
       currentPath.value = newPath
       fetchFiles(newPath)
     }
-    // 刷新文件
   }
 
   const goRoot = () => {
@@ -198,5 +203,47 @@
       }); 
   }
 
-  onMounted(fetchFiles);
+  const handleItemClick = async (item: FileItem) => {
+  if (item.type == "folder") {
+    openFolder(item);
+  }else if (item.type == 'file') {
+    previewFile(item);
+  }
+}
+
+  const openFolder = async (item: FileItem) => {
+    currentPath.value += `${item.name}/`;
+    fetchFiles(currentPath.value);
+  }
+
+  const previewFile = async (item: FileItem) => {
+    const encodedPath = encodeURIComponent(currentPath.value);
+    const encodedID = encodeURIComponent(item.name);
+    router.push(`/preview?path=${encodedPath}&fileID=${encodedID}`);
+  }
+
+  const back = () => {
+    if (currentPath.value === '/' || !currentPath.value) {
+      Swal.fire({
+        icon: 'warning',
+        title: '',
+        text: '根目录无法回退',
+        showConfirmButton: false,  // 显示确认按钮
+        timer: 1000,  // 自动关闭时间
+      })
+      return;
+    }
+      const parts = currentPath.value.split('/').filter(Boolean);
+      parts.pop();
+      currentPath.value = '/';
+      currentPath.value = '/' + parts.join('/') + (parts.length ? '/' : '');
+      fetchFiles(currentPath.value);
+  }
+
+  onMounted(()=> {
+    if (route.query.path) {
+      currentPath.value = route.query.path.toString();
+    }
+    fetchFiles(currentPath.value);
+  });
 </script>
