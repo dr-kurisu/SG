@@ -4,7 +4,7 @@ import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
 
-const router = Router()
+const storageRouter = Router()
 
 const uploadDir = path.join(__dirname, '../uploads')
 
@@ -32,7 +32,7 @@ const upload = multer({
 })
 
 // 获取文件/文件夹列表
-router.get('/files', (req: Request, res: Response) => {
+storageRouter.get('/files', (req: Request, res: Response) => {
   try {
     const pathQuery = req.query.path as string || '/'
     const safePath = decodeURIComponent(pathQuery).replace(/\.\./g, '')
@@ -57,7 +57,7 @@ router.get('/files', (req: Request, res: Response) => {
 })
 
 // 上传文件
-router.post('/upload', upload.single('file'), (req: Request, res: Response) => {
+storageRouter.post('/upload', upload.single('file'), (req: Request, res: Response) => {
   if (!req.file) {
     res.status(400).send('No file uploaded')
     return
@@ -69,7 +69,7 @@ router.post('/upload', upload.single('file'), (req: Request, res: Response) => {
 })
 
 // 创建文件夹
-router.post('/createFolder', (req: Request, res: Response) => {
+storageRouter.post('/createFolder', (req: Request, res: Response) => {
   const { folderName, currentPath } = req.body
   if (!folderName) {
     res.status(400).send('Folder name is required')
@@ -89,4 +89,4 @@ router.post('/createFolder', (req: Request, res: Response) => {
   })
 })
 
-export default router
+export default storageRouter
