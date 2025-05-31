@@ -13,9 +13,11 @@ export const upload = multer({
 // 获取文件/文件夹列表
 storageRouter.get('/files', (req: Request, res: Response) => {
   try {
-    const pathQuery = req.query.path as string || '/'
+    const pathQuery = req.query.path as string || '/';
+    // const userId = ?
+    const userId = "admin";
     // 调用service接口
-    const result = getFileList(pathQuery);
+    const result = getFileList(userId, pathQuery);
     res.status(200).json(result);
   } catch (err) {
     console.error('Error reading files:', err)
@@ -38,12 +40,13 @@ storageRouter.post('/upload', upload.single('file'), (req: Request, res: Respons
 // 创建文件夹
 storageRouter.post('/createFolder', (req: Request, res: Response) => {
   const { folderName, currentPath } = req.body
+  const userId = "admin"; // userId will get from req
   if (!folderName) {
     res.status(400).send('Folder name is required')
     return
   }
   try {
-    const result = createFolder(folderName, currentPath);
+    const result = createFolder(userId, folderName, currentPath);
     res.send(result);
   }catch (error: any) {
     res.status(400).send(error.message)
