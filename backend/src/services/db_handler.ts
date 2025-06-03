@@ -1,13 +1,15 @@
 import sqlite3 from "sqlite3";
 import { open, Database } from 'sqlite';
 import { FileRecord } from "./types";
+import path from "path";
 
 let db: Database | null = null;
 
-const initDB = async (): Promise<Database> => {
+export const initDB = async (): Promise<Database> => {
     if (!db) {
+        console.log("Creating DB file ...");
         db = await open({
-            filename: '../../data/files.db',
+            filename: path.resolve(__dirname, '../../data/files.db'),
             driver: sqlite3.Database,
         });
 
@@ -27,9 +29,9 @@ const initDB = async (): Promise<Database> => {
         `);
     }
     return db;
-}
+};
 
-const FileHandler = {
+export const FileHandler = {
     insert: async (file: FileRecord): Promise<number> => {
         const db = await initDB();
         const result = await db.run(
@@ -63,16 +65,16 @@ const FileHandler = {
         const db = await initDB();
         const files = await db.all<FileRecord[]>(
             `SELECT * FROM files WHERE user_id = ? AND 
-            filepath LIKE ? AND is_deleted = 0 ORDER BY uploaded_time DESC`,
-            [user_id, `${queryPath}%`]
+            filepath = ? AND is_deleted = 0 ORDER BY uploaded_time DESC`,
+            [user_id, queryPath]
         );
         return files;
     },
 
     // 修改更改时间
 
-    // 获取所有最近删除文件
 
+    // 获取所有最近删除文件
 
 
     // 删除文件By id
@@ -81,5 +83,3 @@ const FileHandler = {
         await db.run(`UPDATE files SET is_deleted = 1 WHERE id = ?`, [id]);
     }
 };
-
-export default FileHandler;

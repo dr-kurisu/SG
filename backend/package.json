@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "tsx watch src/routes/index.ts",
+    "dev": "cross-env NODE_ENV=development tsx watch src/routes/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -23,6 +23,8 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
     "@types/multer": "^1.4.12",
+    "cross-env": "^7.0.3",
+    "rimraf": "^6.0.1",
     "tsx": "^4.19.4"
   }
 }

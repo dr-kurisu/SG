@@ -4,9 +4,10 @@ import Swal from 'sweetalert2'
 
 
 export interface FileItem {
+  id?: number;
   name: string;
-  type: 'file' | 'folder';
-  modifiedTime: string;
+  type: string;
+  modifiedTime?: string;
 }
 
 const files = ref<FileItem[]>([]);
@@ -29,9 +30,9 @@ const fetchFiles = async (path: string = '/') => {
     const res = await axios.get<FileItem[]>('/api/files', {
       params: { path }
     })
-    files.value = res.data
+    files.value = res.data;
     console.log('当前路径:', path, '文件列表:', files.value.map(v => v.name));
-  } catch (error) {
+  } catch (err) {
     Swal.fire({
       icon: 'error',
       title: '错误',
@@ -39,7 +40,7 @@ const fetchFiles = async (path: string = '/') => {
       showConfirmButton: false,  // 显示确认按钮
       timer: 1200,  // 自动关闭时间
     })
-    console.error('获取文件失败:', error)
+    console.error('获取文件失败:', err);
   }
 }
 
@@ -105,11 +106,37 @@ const createFolder = async (event: Event) => {
     alert('请输入文件夹名称');
     return;
   }
-  const response = await axios.post('/api/createFolder', { folderName: folderName.value, currentPath: currentPath.value });
-  console.log(response.data.message);
-  fetchFiles(currentPath.value);
-  closeModal();
-}
+
+  try {
+    const response = await axios.post('/api/createFolder', {
+      folderName: folderName.value,
+      currentPath: currentPath.value
+    });
+
+    console.log("createFolderMessage: ", response.data.message);
+    fetchFiles(currentPath.value);
+    closeModal();
+
+  } catch (error: any) {
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 409) {
+        Swal.fire({
+          icon: "error",
+          title: "文件夹已存在",
+          showConfirmButton: true,
+          timer: 1000,
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "创建失败，请稍后重试",
+          showConfirmButton: true,
+          timer: 1000,
+        });
+      }
+    }
+  }
+};
 
 // function used to display icon for each file type
 const getFileIcon = (filename: string): string => {

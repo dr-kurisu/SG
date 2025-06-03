@@ -9,3 +9,10 @@ export interface FileRecord {
     updated_time?: string;
     is_deleted?: boolean;
 }
+
+export interface FileItem {
+  id?: number;
+  name: string;
+  type: string;
+  modifiedTime?: string;
+}

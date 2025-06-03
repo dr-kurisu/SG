@@ -1,7 +1,7 @@
 // routes.ts
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
-import { createFolder, getFileList, storage } from '../services/storage';
+import { createFolder, getFileList, storage, insertFile } from '../services/storage';
 
 const storageRouter = Router()
 
@@ -11,13 +11,13 @@ export const upload = multer({
 })
 
 // 获取文件/文件夹列表
-storageRouter.get('/files', (req: Request, res: Response) => {
+storageRouter.get('/files', async (req: Request, res: Response) => {
   try {
     const pathQuery = req.query.path as string || '/';
     // const userId = ?
     const userId = "admin";
     // 调用service接口
-    const result = getFileList(userId, pathQuery);
+    const result = await getFileList(userId, pathQuery);
     res.status(200).json(result);
   } catch (err) {
     console.error('Error reading files:', err)
@@ -26,30 +26,41 @@ storageRouter.get('/files', (req: Request, res: Response) => {
 })
 
 // 上传文件
-storageRouter.post('/upload', upload.single('file'), (req: Request, res: Response) => {
+storageRouter.post('/upload', upload.single('file'), async (req: Request, res: Response) => {
   if (!req.file) {
-    res.status(400).send('No file uploaded')
-    return
+    res.status(400).send('No file uploaded');
+    return;
   }
+  const userID = "admin";
+  const relativePath = req.query.path as string || "/";
+  // insert data in DB
+  await insertFile(userID, req.file.filename, relativePath, req.file.size, req.file.mimetype);
+
   res.send({
     message: 'File uploaded successfully',
     file: req.file
-  })
+  });
 })
 
 // 创建文件夹
-storageRouter.post('/createFolder', (req: Request, res: Response) => {
+storageRouter.post('/createFolder', async (req: Request, res: Response) => {
   const { folderName, currentPath } = req.body
   const userId = "admin"; // userId will get from req
   if (!folderName) {
-    res.status(400).send('Folder name is required')
-    return
+    res.status(400).send('Folder name is required');
+    return;
   }
   try {
-    const result = createFolder(userId, folderName, currentPath);
-    res.send(result);
+    const result = await createFolder(userId, folderName, currentPath);
+    if (!result.success) {
+      res.status(409).send(result.message); // 409 表示冲突
+      return;
+    }else {
+      res.send(result);
+    }
+
   }catch (error: any) {
-    res.status(400).send(error.message)
+    res.status(400).send(error.message);
   }
 })
 
