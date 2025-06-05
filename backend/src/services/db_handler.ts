@@ -98,20 +98,21 @@ export const FileHandler = {
         }
     },
 
-    getAll: async (): Promise<FileRecord[]> => {
+    getAll: async (user_id: string): Promise<FileRecord[]> => {
         db = await initDB();
         const files = await db.all<FileRecord[]>(
-            `SELECT * FROM files WHERE is_deleted = 0 ORDER BY uploaded_time DESC`
+            `SELECT * FROM files WHERE is_deleted = 0 AND user_id = ? ORDER BY uploaded_time DESC`,
+            [user_id]
         );
         return files;
     },
 
     // Given id return a file
-    getById: async (id: number): Promise<FileRecord | undefined> => {
+    getById: async (id: number, user_id: string): Promise<FileRecord | undefined> => {
         db = await initDB();
         const file = await db.get<FileRecord>(
-            `SELECT * FROM files WHERE id = ?`,
-            [id]
+            `SELECT * FROM files WHERE id = ? AND user_id = ?`,
+            [id, user_id]
         );
         return file;
     },

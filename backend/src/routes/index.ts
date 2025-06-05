@@ -5,30 +5,12 @@ import path from 'path';
 import storageRouter from './storageRoutes';
 import musicRouter from './musicRoutes';
 import previewRouter from './previewRoutes';
-import fs from "fs";
+import { clearDirectory, clearDatabase } from '../services/utili';
 import { getUploadDir, createFolder } from '../services/storage';
 import { insertMusicRecord } from '../services/music';
 // import diaryRouter from './diary';
 
-function clearDatabase() {
-  const dbPath = path.resolve(__dirname, '../../data/files.db');
-  try {
-    fs.unlinkSync(dbPath);
-    console.log(`数据库删除成功`);
-  } catch (err) {
-    console.error(`数据库删除失败`, err);
-  }
-}
 
-
-function clearDirectory(dirPath: string) {
-  if (!fs.existsSync(dirPath)) return;
-
-  for (const file of fs.readdirSync(dirPath)) {
-    const fullPath = path.join(dirPath, file);
-    fs.rmSync(fullPath, { recursive: true, force: true });
-  }
-}
 
 const initializeDevEnvironment = async () => {
   await clearDatabase();
