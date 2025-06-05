@@ -147,7 +147,6 @@ export const FileHandler = {
         return files;
     },
 
-
     // 删除文件By id
     deleteById: async (id: number): Promise<void> => {
         db = await initDB();
@@ -218,16 +217,22 @@ export const MusicHandler = {
         return files;
     },
 
-    getByFileId: async (user_id: string, file_id: number): Promise<MusicRecord | undefined> => {
+    getByFileId: async (file_id: number, user_id: string): Promise<MusicRecord | undefined> => {
         db = await initDB();
-        const file = await db.get<MusicRecord>(`
-            SELECT * FROM music m 
-            JOIN files f ON f.id = m.file_id
-            WHERE f.id = ? AND f.user_id = ?
-            `,
-            [file_id, user_id]
-        );
-        return file;
+        try {
+            const file = await db.get<MusicRecord>(`
+                SELECT * FROM music m 
+                JOIN files f ON f.id = m.file_id
+                WHERE f.id = ? AND f.user_id = ?
+                `,
+                [file_id, user_id]
+            );
+            return file || undefined;
+        }catch (error) {
+            console.error(`Error fetched music record for ${file_id}`, error);
+            return undefined;
+        }
+
     },
 
     // Given path return music in query path

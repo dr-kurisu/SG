@@ -11,6 +11,7 @@ describe('Database Integration Tests', () => {
     clearDatabase();
     db = await initDB();
   });
+
   test('Full file insert and retrieve flow', async () => {
     const fileId = await FileHandler.insert({
       user_id: user_id,
@@ -40,5 +41,10 @@ describe('Database Integration Tests', () => {
     expect(musicId).toBe(music.id);
     expect(music.filepath).toBe('/music');
     expect(music.filename).toBe('music.mp3');
+  });
+
+  test('No musicRecord in table', async () => {
+    const music = await MusicHandler.getByFileId(2, "admin");
+    expect(music).toBe(undefined);
   });
 });
