@@ -90,13 +90,16 @@ export const createFolder = async (userID: string, folderName: string, relativeP
 };
 
 export const insertFile = async (userID: string, filename: string, relativePath: string, size: number, type: string) => {
+  const fileNameSanitized = filename.replace(/[<>:"/\\|?*]/g, '');
+  const safePath = decodeURIComponent(relativePath).replace(/\.\./g, '');
   const file: FileRecord = {
     user_id: userID,
-    filename: filename,
-    filepath: relativePath,
+    filename: fileNameSanitized,
+    filepath: safePath,
     size: size,
     type: type
   };
+  
   await FileHandler.insert(file);
 };
 
