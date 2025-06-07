@@ -1,21 +1,21 @@
 // routes.ts
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
-import { createFolder, getFileList, storage, insertFile } from '../services/storage';
+import { createFolder, getFileList, storage, insertFile, removeFile } from '../services/storage';
 
 const storageRouter = Router()
 
 export const upload = multer({
   storage,
-  limits: { fileSize: 100 * 1024 * 1024 }
+  limits: { fileSize: 1000 * 1024 * 1024 }
 })
 
 // 获取文件/文件夹列表
 storageRouter.get('/files', async (req: Request, res: Response) => {
   try {
     const pathQuery = req.query.path as string || '/';
-    // const userId = ?
     const userId = "admin";
+
     // 调用service接口
     const result = await getFileList(userId, pathQuery);
     res.status(200).json(result);
@@ -59,9 +59,19 @@ storageRouter.post('/createFolder', async (req: Request, res: Response) => {
       res.send(result);
     }
 
-  }catch (error: any) {
+  }catch(error: any) {
     res.status(400).send(error.message);
   }
-})
+});
+
+
+storageRouter.delete('/:id', async (req: Request, res: Response) => {
+  const user_id = "admin";
+  try {
+    await removeFile(Number(req.params.id), user_id);
+  }catch(error) {
+    res.status(500).json({ error: "Deletion of file failed" });
+  }
+});
 
 export default storageRouter

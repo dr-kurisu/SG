@@ -107,8 +107,33 @@ export const removeFolder = async (userID: string, foldername: string, relativeP
 
 };
 
-export const removeFile = async (userID: string, filename: string, relativePath: string) => {
+export const removeFile = async (id: number, user_id: string): Promise<boolean> => {
+  let file: FileRecord | undefined;
+  try {
+     file = await FileHandler.getById(id, user_id);
+     if (file == undefined) {
+      console.warn(`File with id: ${id} not found for user: ${user_id}`);
+      return false;
+    }
+  }catch(error) {
+    console.error(`Error fetching file with id ${id}:`, error);
+    return false;
+  }
 
+  try {
+    await fs.promises.unlink(file.filepath);
+    console.log(`Successfully deleted file at path: ${file.filepath}`);
+
+  }catch(error: any) {
+    if (error.code === 'ENOENT') {
+      console.warn(`File not found at path: ${file.filepath}, but proceeding with DB record deletion`);
+    } else {
+      console.error(`Error deleting file at path ${file.filepath}:`, error);
+      return false;
+    }
+  }
+  await FileHandler.removeById(id);
+  return true;
 };
 
 export const getUploadDir = () => uploadDir;

@@ -47,4 +47,11 @@ describe('Database Integration Tests', () => {
     const music = await MusicHandler.getByFileId(2, "admin");
     expect(music).toBe(undefined);
   });
+
+  // upload file with invlaid character
+
+  // upload single valid file
+
+  // upload file path invalid
+
 });

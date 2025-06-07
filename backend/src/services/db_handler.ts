@@ -148,7 +148,7 @@ export const FileHandler = {
     },
 
     // 删除文件By id
-    deleteById: async (id: number): Promise<void> => {
+    removeById: async (id: number): Promise<void> => {
         db = await initDB();
         await db.run(`UPDATE files SET is_deleted = 1 WHERE id = ?`, [id]);
     }
