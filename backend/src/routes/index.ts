@@ -15,7 +15,7 @@ import { insertMusicRecord } from '../services/music';
 const initializeDevEnvironment = async () => {
   await clearDatabase();
   console.log("Reset uploads folder...");
-  await clearDirectory(getUploadDir());
+  // await clearDirectory(getUploadDir());
   await createFolder("admin", "Music", "/");
   console.log("Inserting example music...");
   await insertMusicRecord("admin", "musicTest1.mp3", "/", 100, "mp3", 21432);

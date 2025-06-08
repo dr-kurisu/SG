@@ -11,7 +11,7 @@ export interface FileRecord {
 }
 
 export interface FileItem {
-  id?: number;
+  id: number;
   name: string;
   type: string;
   modifiedTime?: string;

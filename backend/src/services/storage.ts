@@ -42,14 +42,17 @@ export const getFileList = async (user_id: string, queryPath: string) => {
       console.warn(`文件不存在于磁盘上: ${fullPath}`);
     }
 
-    const result: FileItem = {
-      id: file.id,
-      name: file.filename,
-      type: file.type,
-      modifiedTime: mtime
+    try {
+      const result: FileItem = {
+        id: file.id!,
+        name: file.filename,
+        type: file.type,
+        modifiedTime: mtime
+      }
+      return result;
+    } catch (error) {
+      console.error(`Cannot construct FileItem without fileID`, error);
     }
-
-    return result;
   });
 };
 
@@ -121,9 +124,8 @@ export const removeFile = async (id: number, user_id: string): Promise<boolean> 
   }
 
   try {
-    await fs.promises.unlink(file.filepath);
-    console.log(`Successfully deleted file at path: ${file.filepath}`);
-
+    await fs.promises.unlink(path.join(uploadDir, file.filepath, file.filename));
+    console.log(`Successfully deleted file ${file.filename} at path: ${file.filepath}`);
   }catch(error: any) {
     if (error.code === 'ENOENT') {
       console.warn(`File not found at path: ${file.filepath}, but proceeding with DB record deletion`);

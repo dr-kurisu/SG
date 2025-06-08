@@ -33,8 +33,15 @@ storageRouter.post('/upload', upload.single('file'), async (req: Request, res: R
   }
   const userID = "admin";
   const relativePath = req.query.path as string || "/";
+
   // insert data in DB
-  await insertFile(userID, req.file.filename, relativePath, req.file.size, req.file.mimetype);
+  try {
+    await insertFile(userID, req.file.filename, relativePath, req.file.size, req.file.mimetype);
+  } catch (error) {
+    console.error('Error inserting file record:', error);
+    res.status(500).send('Error saving file record');
+    return;
+  }
 
   res.send({
     message: 'File uploaded successfully',
@@ -64,11 +71,12 @@ storageRouter.post('/createFolder', async (req: Request, res: Response) => {
   }
 });
 
-
-storageRouter.delete('/:id', async (req: Request, res: Response) => {
+// 删除指定文件
+storageRouter.delete('/delete/:id', async (req: Request, res: Response) => {
   const user_id = "admin";
   try {
     await removeFile(Number(req.params.id), user_id);
+    res.status(200).json({ message: "File deleted successfully" });
   }catch(error) {
     res.status(500).json({ error: "Deletion of file failed" });
   }

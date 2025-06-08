@@ -1,6 +1,5 @@
 import express from "express";
 import {Request, Response} from "express";
-import { getFileList } from "../services/storage";
 import { insertMusicRecord } from "../services/music";
 import { upload } from "./storageRoutes";
 
@@ -18,10 +17,25 @@ musicRouter.post('/add', upload.single('file'), async (req: Request, res: Respon
         res.status(400).send('No file uploaded')
         return
     }
-    const { artist, album, year } = req.body;
+    const { artist, album, year, duration } = req.body;
     const user_id = "admin";
+    const relativePath = req.query.path as string || "/";
 
-    // to do
+    // 插入音乐记录到数据库
+    try {
+        await insertMusicRecord(
+            user_id,
+            req.file.filename,
+            relativePath,
+            duration,
+            req.file.mimetype,
+            req.file.size,
+        );
+    } catch (error) {
+        console.error('Error inserting music record:', error);
+        res.status(500).send('Error saving music record');
+        return;
+    }
 
     res.send({
         message: 'File uploaded successfully',
