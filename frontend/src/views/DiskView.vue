@@ -141,7 +141,7 @@
           class="relative flex items-center bg-white px-4 py-3 rounded-md hover:bg-gray-200 transition"
         >
           <!-- 文件名，占满宽度 -->
-          <div class="flex items-center w-full pr-40 space-x-2"> 
+          <div class="flex items-center w-full pr-40 space-x-2 select-none"> 
             <i :class="['fas', item.type === 'folder' ? 'fa-folder' : getFileIcon(item.name), 'text-gray-500']"></i>
             <span class="truncate">{{ item.name.replace(/-\w+(?=\.\w+$)/, '') }}</span>
           </div>
@@ -209,7 +209,7 @@ const removeFiles = async () => {
   // 如果用户点击了确认按钮
   if (result.isConfirmed) {
     console.log('删除文件:', [...selectFileItems.value].map(file => file.name));
-    await Promise.all([...selectFileItems.value].map(file => removeFile(file.id)));
+    await Promise.all([...selectFileItems.value].map(file => removeFile(file.id, file.type)));
     selectFileItems.value.clear();
     await fetchFiles(currentPath.value);
   }

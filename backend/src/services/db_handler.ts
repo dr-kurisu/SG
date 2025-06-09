@@ -151,7 +151,19 @@ export const FileHandler = {
     removeById: async (id: number): Promise<void> => {
         db = await initDB();
         await db.run(`UPDATE files SET is_deleted = 1 WHERE id = ?`, [id]);
-    }
+    },
+
+    // 删除文件By Given start path
+    removeByStartPath: async (startPath: string, user_id: string): Promise<void> => {
+        console.log(`Removing files with start path: ${startPath} for user: ${user_id}`);
+        db = await initDB();
+        await db.run(`
+            UPDATE files 
+            SET is_deleted = 1 
+            WHERE filepath LIKE ? AND user_id = ?`, 
+            [`${startPath}%`, user_id]
+        );
+    },
 };
 
 export const MusicHandler = {

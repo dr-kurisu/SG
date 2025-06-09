@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 
 const previewRouter = express.Router();
-const uploadDir = path.join(__dirname, '../uploads');
+const uploadDir = path.posix.join(__dirname, '../uploads');
 
 
 previewRouter.get('/', (req, res) => {
@@ -13,7 +13,7 @@ previewRouter.get('/', (req, res) => {
   const fileID = decodeURIComponent(rawFileID);
   const currentPath = decodeURIComponent(rawPath);
 
-  const filePath = path.join(uploadDir, currentPath, fileID);
+  const filePath = path.posix.join(uploadDir, currentPath, fileID);
 
   const allowedExt = ['.txt', '.md', '.json', '.log'];
   const ext = path.extname(filePath);

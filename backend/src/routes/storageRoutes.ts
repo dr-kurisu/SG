@@ -1,7 +1,7 @@
 // routes.ts
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
-import { createFolder, getFileList, storage, insertFile, removeFile } from '../services/storage';
+import { createFolder, getFileList, storage, insertFile, removeFile, removeFolder } from '../services/storage';
 
 const storageRouter = Router()
 
@@ -79,6 +79,21 @@ storageRouter.delete('/delete/:id', async (req: Request, res: Response) => {
     res.status(200).json({ message: "File deleted successfully" });
   }catch(error) {
     res.status(500).json({ error: "Deletion of file failed" });
+  }
+});
+
+storageRouter.delete('/deleteFolder/:id', async (req: Request, res: Response) => {
+  const user_id = "admin";
+  try {
+    const result = await removeFolder(Number(req.params.id), user_id);
+    if (result) {
+      res.status(200).json({ message: "Folder deleted successfully" });
+    } else {
+      res.status(404).json({ error: "Folder not found" });
+    }
+  } catch (error) {
+    console.error('Error deleting folder:', error);
+    res.status(500).json({ error: "Deletion of folder failed" });
   }
 });
 

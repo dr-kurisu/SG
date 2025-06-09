@@ -13,7 +13,7 @@ export class TypRenderer {
     
     // Basically run the command locally
     public compile(): Buffer {
-        const cmd = `typst compile ${this.typstEntry} ${path.join(this.outDir, `${this.typstEntry}.pdf`)}`;
+        const cmd = `typst compile ${this.typstEntry} ${path.posix.join(this.outDir, `${this.typstEntry}.pdf`)}`;
         return execSync(cmd);
     }
 

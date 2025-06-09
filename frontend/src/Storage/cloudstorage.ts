@@ -139,37 +139,39 @@ export const createFolder = async (event: Event) => {
 };
 
 // Remove given file by ID
-export const removeFile = async (file_id: number) => {
-  try {
-    const response = await axios.delete(`/api/delete/${file_id}`);
-    console.log("removeFileMessage: ", response.data.message);
-    await fetchFiles(currentPath.value);
-  } catch (error) {
-    Swal.fire({
-      icon: 'error',
-      title: '删除失败',
-      text: '请稍后再试。',
-      showConfirmButton: true,
-    });
-    console.error('删除文件失败:', error);
+export const removeFile = async (id: number, file_type: string) => {
+  if (file_type === 'folder') {
+    try {
+      const response = await axios.delete(`/api/deleteFolder/${id}`);
+      console.log("removeFolderMessage: ", response.data.message);
+      fetchFiles(currentPath.value);
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: '删除失败',
+        text: '请稍后再试。',
+        showConfirmButton: true,
+      });
+      console.error('删除文件夹失败:', error);
+    }
+    return;
+  }else {
+    try {
+      const response = await axios.delete(`/api/delete/${id}`);
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: '删除失败',
+        text: '请稍后再试。',
+        showConfirmButton: true,
+      });
+      console.error('删除文件失败:', error);
+    }
   }
 }
 
 // remove folder by ID
 export const removeFolder = async (folder_id: number) => {
-  try {
-    const response = await axios.delete(`/api/deleteFolder/${folder_id}`);
-    console.log("removeFolderMessage: ", response.data.message);
-    fetchFiles(currentPath.value);
-  } catch (error) {
-    Swal.fire({
-      icon: 'error',
-      title: '删除失败',
-      text: '请稍后再试。',
-      showConfirmButton: true,
-    });
-    console.error('删除文件夹失败:', error);
-  }
 };
 
 

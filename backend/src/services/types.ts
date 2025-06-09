@@ -3,7 +3,7 @@ export interface FileRecord {
   user_id: string;
   filename: string;
   filepath: string; // Relative path
-  size: number;
+  size: number;  // bytes
   type: string;
   created_time?: string;
   updated_time?: string;
