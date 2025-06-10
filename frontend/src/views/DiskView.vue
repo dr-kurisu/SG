@@ -59,7 +59,8 @@
           @click="back"
           class="text-sm text-blue-600 hover:scale-95 active:scale-75 transition-transform duration-40"
         >
-          <i class="fas fa-arrow-left mr-1"></i>返回
+          <i class="fas fa-arrow-left mr-1"></i>
+          <span>返回</span>
         </button>
         <button
           @click="refresh"
@@ -143,7 +144,7 @@
           <!-- 文件名，占满宽度 -->
           <div class="flex items-center w-full pr-40 space-x-2 select-none"> 
             <i :class="['fas', item.type === 'folder' ? 'fa-folder' : getFileIcon(item.name), 'text-gray-500']"></i>
-            <span class="truncate">{{ item.name.replace(/-\w+(?=\.\w+$)/, '') }}</span>
+            <span class="truncate">{{ item.name.replace(/__\w+(?=\.\w+$)/, '') }}</span>
           </div>
 
           <!-- 修改时间，固定宽度，右对齐 -->
@@ -169,7 +170,7 @@
 <script lang="ts" setup>
 import { files, folderName, showModal, currentPath, fetchFiles, handleUpload, openModal, refresh, closeModal, getFileIcon, createFolder, removeFile } from '../storage/cloudstorage'
 import type { FileItem } from '../storage/cloudstorage';
-import { useRouter, useRoute, onBeforeRouteUpdate } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { onMounted, computed, ref } from 'vue';
 import Swal from 'sweetalert2'
 
@@ -177,6 +178,16 @@ const router = useRouter();
 const route = useRoute();
 
 const selectFileItems = ref<Set<FileItem>>(new Set());
+
+const fetchFilesV2 = async (path: string) => {
+  console.log('Fetching files for path:', path);
+  try {
+    await fetchFiles(path);
+    selectFileItems.value.clear();
+  } catch (error) {
+    console.error('获取文件列表失败:', error);
+  }
+}
 
 const toggleSelection = (fileItem: FileItem) => {
   if (selectFileItems.value.has(fileItem)) {
@@ -211,7 +222,7 @@ const removeFiles = async () => {
     console.log('删除文件:', [...selectFileItems.value].map(file => file.name));
     await Promise.all([...selectFileItems.value].map(file => removeFile(file.id, file.type)));
     selectFileItems.value.clear();
-    await fetchFiles(currentPath.value);
+    await fetchFilesV2(currentPath.value);
   }
 }
 
@@ -220,14 +231,14 @@ const goTo = (index: number) => {
   const newPath = '/' + pathParts.value.slice(0, index + 1).join('/') + '/'
   if (newPath != currentPath.value) {
     currentPath.value = newPath;
-    fetchFiles(newPath);
+    fetchFilesV2(newPath);
   }
 }
 
 const goRoot = () => {
   if (currentPath.value != '/') {
   currentPath.value = '/';
-  fetchFiles(currentPath.value);
+  fetchFilesV2(currentPath.value);
   }
 }
 
@@ -279,7 +290,7 @@ if (item.type == "folder") {
 
 const openFolder = async (item: FileItem) => {
   currentPath.value += `${item.name}/`;
-  fetchFiles(currentPath.value);
+  fetchFilesV2(currentPath.value);
 }
 
 const previewFile = async (item: FileItem) => {
@@ -289,6 +300,7 @@ const previewFile = async (item: FileItem) => {
 }
 
 const back = () => {
+  console.log('当前路径:', currentPath.value);
   if (currentPath.value === '/' || !currentPath.value) {
     Swal.fire({
       icon: 'warning',
@@ -301,15 +313,14 @@ const back = () => {
   }
     const parts = currentPath.value.split('/').filter(Boolean);
     parts.pop();
-    currentPath.value = '/';
     currentPath.value = '/' + parts.join('/') + (parts.length ? '/' : '');
-    fetchFiles(currentPath.value);
+    fetchFilesV2(currentPath.value);
 }
 
 onMounted(()=> {
   if (route.query.path) {
     currentPath.value = route.query.path.toString();
   }
-  fetchFiles(currentPath.value);
+  fetchFilesV2(currentPath.value);
 });
 </script>

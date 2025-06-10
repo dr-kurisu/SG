@@ -89,7 +89,7 @@ storageRouter.delete('/deleteFolder/:id', async (req: Request, res: Response) =>
     if (result) {
       res.status(200).json({ message: "Folder deleted successfully" });
     } else {
-      res.status(404).json({ error: "Folder not found" });
+      res.status(404).json({ error: "Folder not found or no permission" });
     }
   } catch (error) {
     console.error('Error deleting folder:', error);

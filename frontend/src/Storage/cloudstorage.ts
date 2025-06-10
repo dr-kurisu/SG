@@ -2,7 +2,6 @@ import { ref } from 'vue';
 import axios from 'axios';
 import Swal from 'sweetalert2'
 
-
 export interface FileItem {
   id: number;
   name: string;
@@ -31,7 +30,7 @@ export const fetchFiles = async (path: string = '/') => {
       params: { path }
     })
     files.value = res.data;
-    console.log('当前路径:', path, '文件列表:', files.value.map(v => v.name));
+    // console.log('当前路径:', path, '文件列表:', files.value.map(v => v.name));
   } catch (err) {
     Swal.fire({
       icon: 'error',
@@ -143,13 +142,12 @@ export const removeFile = async (id: number, file_type: string) => {
   if (file_type === 'folder') {
     try {
       const response = await axios.delete(`/api/deleteFolder/${id}`);
-      console.log("removeFolderMessage: ", response.data.message);
       fetchFiles(currentPath.value);
     } catch (error) {
       Swal.fire({
         icon: 'error',
         title: '删除失败',
-        text: '请稍后再试。',
+        text: '无法删除Music文件夹或稍后重试',
         showConfirmButton: true,
       });
       console.error('删除文件夹失败:', error);

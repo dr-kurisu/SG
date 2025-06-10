@@ -46,6 +46,7 @@ export const scanDirectory = async (dirRelativePath: string): Promise<string[]> 
       if (!dirRelativePath.endsWith('/')) {
         dirRelativePath += '/';
       }
+
       console.log(`插入文件: ${file} 在路径: ${dirRelativePath}`);
       const type = lookup(fullPath) || "file";
       const size = fs.statSync(fullPath).size;

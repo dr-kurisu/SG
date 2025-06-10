@@ -20,7 +20,7 @@ export const storage = multer.diskStorage({
     const fileParts = decodedFileName.split('.');
     const name = fileParts.slice(0, -1).join('.');
     const extension = fileParts[fileParts.length - 1];
-    const newFileName = `${name}-${uuidv4()}.${extension}`;
+    const newFileName = `${name}__${uuidv4().replace(/-/g, '')}.${extension}`;
     cb(null, newFileName);
   }
 });
@@ -116,9 +116,19 @@ export const removeFolder = async (id: number, user_id: string) => {
     return false;
   }
 
+  if (folder.type !== 'folder') {
+    console.warn(`ID ${id} is not a folder, cannot delete`);
+    return false;
+  }
+
+  if (folder.filepath === '/' || folder.filename === 'Music') {
+    console.warn(`Do no have permission to delete Music folder`);
+    return false;
+  }
+
   try {
     await fs.promises.rm(path.posix.join(uploadDir, folder.filepath, folder.filename), { recursive: true });
-    await FileHandler.removeByStartPath(folder.filepath, user_id);
+    await FileHandler.removeByStartPath(path.posix.join(folder.filepath, folder.filename), user_id);
     console.log(`Successfully deleted folder ${folder.filename} at path: ${folder.filepath}`);
   }catch(error: any) {
     if (error.code === 'ENOENT') {

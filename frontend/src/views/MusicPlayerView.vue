@@ -1,12 +1,10 @@
 <template>
     <h2>Player</h2>
-    <MusicList />
-    <MusicPlayer />
+    <CoverElement />
+    <PlayerControls />
 </template>
 
 <script lang="ts" setup>
-    import MusicList from '@/components/MusicList.vue';
-    import MusicPlayer from '@/components/MusicPlayer.vue';
-
-    
+    import CoverElement from '@/components/MusicPlayer/CoverElement.vue';
+import PlayerControls from '@/components/MusicPlayer/PlayerControls.vue';
 </script>
