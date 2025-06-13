@@ -1,30 +1,34 @@
 <!-- Control Bar -->
 <template>
-    <div class="w-full flex bg-gray-700 text-white p-4 items-center justify-between">
-        <!-- AudioElement-->
-        <AudioElement
-          ref="audio"
-          :src="currentMusic"
-          v-model:currentTime="currentTime"
-          @loaded="onLoaded"
-          @ended="onEnded"
-        />
+  <div class="w-full flex bg-gray-700 text-white p-4 items-center justify-between">
+    <!-- AudioElement-->
+    <AudioElement
+      ref="audio"
+      :src="currentMusic"
+      :isDragging="isDragging"
+      v-model:currentTime="currentTime"
+      @loaded="onLoaded"
+      @ended="onEnded"
+    />
 
-        <!-- 时间和进度条 -->
-        <div class="flex items-center space-x-4 justify-center flex-1">
-          <span class="text-sm">{{ formatTime(Number(currentTime)) }}</span>
-          <input
-            type="range"
-            min="0"
-            :max="duration"
-            step="0.1"
-            v-model="currentTime"
-            @input="onSliderInput"
-            class="flex-1"
-          />
-          <span class="text-sm w-12">{{ formatTime(duration) }}</span>
-        </div>
+    <!-- 时间和进度条 -->
+    <div class="flex items-center space-x-4 justify-center flex-1">
+      <span class="text-sm">{{ formatTime(Number(currentTime)) }}</span>
+      <input
+        type="range"
+        min="0"
+        :max="duration"
+        step="0.1"
+        v-model="currentTime"
+        @input="onSliderInput"
+        @change="onSliderChange"
+        @mousedown="isDragging = true"
+        @mouseup="isDragging = false"
+        class="flex-1"
+      />
+      <span class="text-sm w-12">{{ formatTime(duration) }}</span>
     </div>
+  </div>
 
 
     <!-- 控制按钮 -->
@@ -70,13 +74,17 @@ const currentTime = ref("0");
 const duration = ref<number>(0);
 const playMode = ref<'order' | 'repeat' | 'shuffle'>('order');
 const lyricsSwitch = ref<boolean>(false);
+const isDragging = ref(false); // 是否拖动进度条
 
 const onSliderInput = (e: Event) => {
   const value = (e.target as HTMLInputElement).value;
-  console.log("Value: ", value);
-  currentTime.value = value; // 更新 v-model
-  audio.value?.seek(Number(value)); // 主动调用 seek
+  currentTime.value = value;
 }
+
+const onSliderChange = (e: Event) => {
+  const value = (e.target as HTMLInputElement).value;
+  audio.value?.seek(Number(value));
+};
 
 const togglePlay = () => {
   if (!audio.value) return;
