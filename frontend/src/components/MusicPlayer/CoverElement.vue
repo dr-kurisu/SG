@@ -2,7 +2,7 @@
   <div class="flex flex-col items-center">
     <div
       ref="discRef"
-      class="w-[400px] h-[400px] rounded-full overflow-hidden border-4 border-gray-200 transition-transform duration-100"
+      
     >
       <template v-if="coverPath">
           <!-- <img
