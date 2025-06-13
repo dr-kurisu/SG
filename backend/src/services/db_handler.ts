@@ -1,6 +1,6 @@
 import sqlite3 from "sqlite3";
 import { open, Database } from 'sqlite';
-import { FileRecord, MusicRecord } from "./types";
+import { FileRecord, MusicRecord, PlayList, PlaylistEntry } from "./types";
 import path from "path";
 
 let db: Database | null = null;
@@ -272,5 +272,52 @@ export const MusicHandler = {
             [user_id, file_id]
         );
         return music;
+    }
+}
+
+
+export const PlayListHandler = {
+    getPlayListsByUserID: async (user_id: string): Promise<PlayList[] | []> => {
+        db = await initDB();
+        const playLists = await db.all<PlayList[]>(`
+            SELECT * FROM playlist
+            WHERE user_id = ?
+            ORDER BY created_time DESC`, 
+            [user_id]
+        );
+        return playLists;
+    },
+
+    getPlayListByID: async (id: number, user_id: string): Promise<PlayList | undefined> => {
+        db = await initDB();
+        const playList = await db.get<PlayList>(`
+            SELECT * FROM playlist
+            WHERE user_id = ? AND
+            id = ?`,
+            [user_id, id]
+        );
+        return playList;
+    },
+
+    insertPlayList: async (playList: PlayList): Promise<number> => {
+        db = await initDB();
+        const result = await db.run(`
+            INSERT INTO playlist (user_id, name, description, cover_path)
+            VALUES (?, ?, ?, ?);    `,
+            [playList.user_id, playList.name, playList.description, playList.cover_path]
+        );
+        if (!result.lastID) {
+            throw new Error("Insert failed. No last ID return in playList insertion");
+        }
+        return result.lastID;
+    },
+
+    removePlayListByID: async (id: number, user_id: string) => {
+        db = await initDB();
+        await db.run(`
+            DELETE FROM playlist
+            WHERE id = ? AND
+            user_id = ?
+        `, [id, user_id]);
     }
 }
