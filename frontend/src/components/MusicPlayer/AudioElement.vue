@@ -14,6 +14,7 @@ import { ref } from "vue";
 const props = defineProps<{
   src: string;
   currentTime: string;
+  isDragging: boolean;
 }>();
 
 const isSeeking = ref(false);
@@ -44,25 +45,15 @@ const pause = async () => {
 const seek = async (time: number) => {
   isSeeking.value = true;
   if (audioRef.value) {
-    const seekCompleted = new Promise<void>((resolve) => {
-      const onSeeked = () => {
-        audioRef.value?.removeEventListener('seeked', onSeeked);
-        resolve();
-      };
-      audioRef.value?.addEventListener('seeked', onSeeked);
-    });
-
     audioRef.value.currentTime = time;
-    
-    await seekCompleted;
-    emit('update:currentTime', audioRef.value.currentTime.toString());
+    emit('update:currentTime', time.toString());
   }
   isSeeking.value = false;
 };
 
 // onTimeUpdate used to reverse update currentTime in a parent component
 const onTimeUpdate = () => {
-  if (audioRef.value && !isSeeking.value) {
+  if (audioRef.value && !isSeeking.value && !props.isDragging) {
     emit('update:currentTime', audioRef.value.currentTime.toString());
   }
 };

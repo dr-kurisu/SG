@@ -5,6 +5,7 @@
     <AudioElement
       ref="audio"
       :src="currentMusic"
+      :isDragging="isDragging"
       v-model:currentTime="currentTime"
       @loaded="onLoaded"
       @ended="onEnded"
@@ -20,6 +21,9 @@
         step="0.1"
         v-model="currentTime"
         @input="onSliderInput"
+        @change="onSliderChange"
+        @mousedown="isDragging = true"
+        @mouseup="isDragging = false"
         class="flex-1"
       />
       <span class="text-sm w-12">{{ formatTime(duration) }}</span>
@@ -70,13 +74,17 @@ const currentTime = ref("0");
 const duration = ref<number>(0);
 const playMode = ref<'order' | 'repeat' | 'shuffle'>('order');
 const lyricsSwitch = ref<boolean>(false);
+const isDragging = ref(false); // 是否拖动进度条
 
 const onSliderInput = (e: Event) => {
   const value = (e.target as HTMLInputElement).value;
-  console.log("In playerControl: ", value);
   currentTime.value = value;
-  audio.value?.seek(Number(value)); // 主动调用 seek
 }
+
+const onSliderChange = (e: Event) => {
+  const value = (e.target as HTMLInputElement).value;
+  audio.value?.seek(Number(value));
+};
 
 const togglePlay = () => {
   if (!audio.value) return;
