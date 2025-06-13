@@ -260,4 +260,17 @@ export const MusicHandler = {
         );
         return music;
     },
+
+    getMusicByFileID: async (user_id: string, file_id: number): Promise<MusicRecord | undefined> => {
+        db = await initDB();
+        const music = await db.get<MusicRecord>(`
+            SELECT * FROM music m
+            JOIN files f ON f.id = m.file_id
+            WHERE f.user_id = ? AND
+            f.id = ? AND
+            f.is_deleted = 0`,
+            [user_id, file_id]
+        );
+        return music;
+    }
 }

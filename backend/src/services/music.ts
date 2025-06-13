@@ -41,6 +41,16 @@ export const getMusicByPath = async (user_id: string, path: string) => {
     const music = await MusicHandler.getMusicByPath(user_id, path);
     return music;
 }
+// Get music by id and user id
+export const getMusicByFileID = async (user_id: string, file_id: number): Promise<MusicRecord | undefined> => {
+    try {
+        const music = await MusicHandler.getMusicByFileID(user_id, file_id);
+        return music;
+    }catch (error) {
+        console.log(error);
+        return undefined;
+    }
+}
 
 // Get all music in given playlist
 
