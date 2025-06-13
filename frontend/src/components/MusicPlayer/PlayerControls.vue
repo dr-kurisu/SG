@@ -1,30 +1,30 @@
 <!-- Control Bar -->
 <template>
-    <div class="w-full flex bg-gray-700 text-white p-4 items-center justify-between">
-        <!-- AudioElement-->
-        <AudioElement
-          ref="audio"
-          :src="currentMusic"
-          v-model:currentTime="currentTime"
-          @loaded="onLoaded"
-          @ended="onEnded"
-        />
+  <div class="w-full flex bg-gray-700 text-white p-4 items-center justify-between">
+    <!-- AudioElement-->
+    <AudioElement
+      ref="audio"
+      :src="currentMusic"
+      v-model:currentTime="currentTime"
+      @loaded="onLoaded"
+      @ended="onEnded"
+    />
 
-        <!-- 时间和进度条 -->
-        <div class="flex items-center space-x-4 justify-center flex-1">
-          <span class="text-sm">{{ formatTime(Number(currentTime)) }}</span>
-          <input
-            type="range"
-            min="0"
-            :max="duration"
-            step="0.1"
-            v-model="currentTime"
-            @input="onSliderInput"
-            class="flex-1"
-          />
-          <span class="text-sm w-12">{{ formatTime(duration) }}</span>
-        </div>
+    <!-- 时间和进度条 -->
+    <div class="flex items-center space-x-4 justify-center flex-1">
+      <span class="text-sm">{{ formatTime(Number(currentTime)) }}</span>
+      <input
+        type="range"
+        min="0"
+        :max="duration"
+        step="0.1"
+        v-model="currentTime"
+        @input="onSliderInput"
+        class="flex-1"
+      />
+      <span class="text-sm w-12">{{ formatTime(duration) }}</span>
     </div>
+  </div>
 
 
     <!-- 控制按钮 -->
@@ -73,8 +73,8 @@ const lyricsSwitch = ref<boolean>(false);
 
 const onSliderInput = (e: Event) => {
   const value = (e.target as HTMLInputElement).value;
-  console.log("Value: ", value);
-  currentTime.value = value; // 更新 v-model
+  console.log("In playerControl: ", value);
+  currentTime.value = value;
   audio.value?.seek(Number(value)); // 主动调用 seek
 }
 

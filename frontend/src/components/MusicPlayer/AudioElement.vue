@@ -4,16 +4,19 @@
     :src="src"
     @ended="onEnded"
     @loadedmetadata="onLoadedMetadata"
+    @timeupdate="onTimeUpdate"
   ></audio>
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref } from "vue";
+import { ref } from "vue";
 
 const props = defineProps<{
   src: string;
   currentTime: string;
-}>()
+}>();
+
+const isSeeking = ref(false);
 
 const emit = defineEmits<{
   (e: 'update:currentTime', value: string): void
@@ -23,77 +26,57 @@ const emit = defineEmits<{
 
 const audioRef = ref<HTMLAudioElement | null>(null);
 
-const play = () => {
-  audioRef.value?.play();
-}
-
-const seek = (time: number) => {
-  const audio = audioRef.value;
-  if (!audio) {
-    console.log("音频元素未找到");
-    return;
+// Play function used to control audio
+const play = async () => {
+  if (audioRef.value) {
+    await audioRef.value.play();
   }
-
-  console.log("尝试跳转到:", time);
-  console.log("当前 readyState:", audio.readyState);
-
-  const doSeek = () => {
-    if (audio.readyState >= 2) {
-      audio.currentTime = time;
-      emit("update:currentTime", String(time));
-      // 在短暂延迟后检查跳转是否成功
-      setTimeout(() => {
-        console.log("设置后的 currentTime:", audio.currentTime);
-      }, 1000);
-    } else {
-      console.log("音频尚未准备好跳转，当前 readyState:", audio.readyState);
-    }
-  };
-
-  if (audio.readyState >= 2) {
-    doSeek();
-  } else {
-    // 等待 "canplay" 事件，确保音频可播放
-    audio.addEventListener("canplay", doSeek, { once: true });
-    console.log("等待 'canplay' 事件以执行跳转");
-  }
-
-  // 添加错误处理，检查音频加载问题
-  audio.addEventListener("error", (e) => {
-    console.error("音频错误:", e);
-  });
 };
 
-const onTimeUpdate = () => {
+// Pause function used to control audio
+const pause = async () => {
   if (audioRef.value) {
-    console.log("update: ", audioRef.value?.currentTime);
-    emit('update:currentTime', String(audioRef.value.currentTime));
+    await audioRef.value.pause();
   }
 }
+
+// Seek function used to control 
+const seek = async (time: number) => {
+  isSeeking.value = true;
+  if (audioRef.value) {
+    const seekCompleted = new Promise<void>((resolve) => {
+      const onSeeked = () => {
+        audioRef.value?.removeEventListener('seeked', onSeeked);
+        resolve();
+      };
+      audioRef.value?.addEventListener('seeked', onSeeked);
+    });
+
+    audioRef.value.currentTime = time;
+    
+    await seekCompleted;
+    emit('update:currentTime', audioRef.value.currentTime.toString());
+  }
+  isSeeking.value = false;
+};
+
+// onTimeUpdate used to reverse update currentTime in a parent component
+const onTimeUpdate = () => {
+  if (audioRef.value && !isSeeking.value) {
+    emit('update:currentTime', audioRef.value.currentTime.toString());
+  }
+};
 
 const onLoadedMetadata = () => {
-  if (!audioRef.value) return
-  emit('loaded', audioRef.value.duration);
-}
-
-const onEnded = () => {
-  emit('ended');
-}
-
-const pause = () => {
-  audioRef.value?.pause()
-}
-
-onMounted(() => {
-  if (!audioRef.value) {
-    console.warn('audioRef is not loaded yet.');
+  if (audioRef.value) {
+    emit('loaded', audioRef.value.duration);
   }
-});
+};
 
 defineExpose({
   play,
   pause,
   seek,
-})
+});
 
 </script>
