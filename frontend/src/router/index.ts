@@ -10,6 +10,7 @@ const routes = [
     { path: '/clouddisk', name: 'CloudDisk', component: CloudDiskView },
     { path: '/musicplayer', name: 'MusicPlayer', component: MusicPlayerView},
     { path: '/preview', name: 'Preview', component: Preview},
+    // { path: '/diary', name: 'Diary', component: DiaryView},
 ]
 
 export const router = createRouter({

@@ -2,36 +2,36 @@ import { ref } from 'vue';
 import axios from 'axios';
 import Swal from 'sweetalert2'
 
-
 export interface FileItem {
+  id: number;
   name: string;
-  type: 'file' | 'folder';
+  type: string;
   modifiedTime: string;
 }
 
-const files = ref<FileItem[]>([]);
-const folderName = ref(''); // Folder name
-const showModal = ref(false);  // 控制模态框的显示
-const currentPath = ref('/');
+export const files = ref<FileItem[]>([]);
+export const folderName = ref(''); // Folder name
+export const showModal = ref(false);  // 控制模态框的显示
+export const currentPath = ref('/');
 
-const openModal = () => {
+export const openModal = () => {
   showModal.value = true;
   folderName.value = '';
 };
 
-const closeModal = () => {
+export const closeModal = () => {
   showModal.value = false;
   folderName.value = '';
 };
 
-const fetchFiles = async (path: string = '/') => {
+export const fetchFiles = async (path: string = '/') => {
   try {
     const res = await axios.get<FileItem[]>('/api/files', {
       params: { path }
     })
-    files.value = res.data
-    console.log('当前路径:', path, '文件列表:', files.value.map(v => v.name));
-  } catch (error) {
+    files.value = res.data;
+    // console.log('当前路径:', path, '文件列表:', files.value.map(v => v.name));
+  } catch (err) {
     Swal.fire({
       icon: 'error',
       title: '错误',
@@ -39,13 +39,13 @@ const fetchFiles = async (path: string = '/') => {
       showConfirmButton: false,  // 显示确认按钮
       timer: 1200,  // 自动关闭时间
     })
-    console.error('获取文件失败:', error)
+    console.error('获取文件失败:', err);
   }
 }
 
 // button adaptor
-const refresh = async(event: Event) => {
-  fetchFiles(currentPath.value);
+export const refresh = async(event: Event) => {
+  await fetchFiles(currentPath.value);
   Swal.fire({
     icon: 'success',
     title: '',
@@ -55,7 +55,7 @@ const refresh = async(event: Event) => {
   });
 }
 // handling upload of files
-const handleUpload = async (event: Event) => {
+export const handleUpload = async (event: Event) => {
   const input = event.target as HTMLInputElement;
   if (input.files == null) {
     Swal.fire({
@@ -100,19 +100,81 @@ const handleUpload = async (event: Event) => {
   }
 };
 
-const createFolder = async (event: Event) => {
+export const createFolder = async (event: Event) => {
   if (!folderName.value) {
     alert('请输入文件夹名称');
     return;
   }
-  const response = await axios.post('/api/createFolder', { folderName: folderName.value, currentPath: currentPath.value });
-  console.log(response.data.message);
-  fetchFiles(currentPath.value);
-  closeModal();
+
+  try {
+    const response = await axios.post('/api/createFolder', {
+      folderName: folderName.value,
+      currentPath: currentPath.value
+    });
+
+    console.log("createFolderMessage: ", response.data.message);
+    fetchFiles(currentPath.value);
+    closeModal();
+
+  } catch (error: any) {
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 409) {
+        Swal.fire({
+          icon: "error",
+          title: "文件夹已存在",
+          showConfirmButton: true,
+          timer: 1000,
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "创建失败，请稍后重试",
+          showConfirmButton: true,
+          timer: 1000,
+        });
+      }
+    }
+  }
+};
+
+// Remove given file by ID
+export const removeFile = async (id: number, file_type: string) => {
+  if (file_type === 'folder') {
+    try {
+      const response = await axios.delete(`/api/deleteFolder/${id}`);
+      fetchFiles(currentPath.value);
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: '删除失败',
+        text: '无法删除Music文件夹或稍后重试',
+        showConfirmButton: true,
+      });
+      console.error('删除文件夹失败:', error);
+    }
+    return;
+  }else {
+    try {
+      const response = await axios.delete(`/api/delete/${id}`);
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: '删除失败',
+        text: '请稍后再试。',
+        showConfirmButton: true,
+      });
+      console.error('删除文件失败:', error);
+    }
+  }
 }
 
+// remove folder by ID
+export const removeFolder = async (folder_id: number) => {
+};
+
+
 // function used to display icon for each file type
-const getFileIcon = (filename: string): string => {
+export const getFileIcon = (filename: string): string => {
   const ext = filename.split('.').pop()?.toLowerCase() || '';
   if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg'].includes(ext)) return 'fa-file-image';
   if (['mp4', 'avi', 'mov', 'mkv'].includes(ext)) return 'fa-file-video';
@@ -125,5 +187,3 @@ const getFileIcon = (filename: string): string => {
   if (['txt', 'md', 'csv'].includes(ext)) return 'fa-file-alt';
   return 'fa-file'; // 默认图标
 };
-
-export { files, folderName, showModal, currentPath, handleUpload, fetchFiles, createFolder, getFileIcon, openModal, closeModal, refresh }
