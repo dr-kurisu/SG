@@ -8,6 +8,8 @@ export interface FileRecord {
   created_time?: string;
   updated_time?: string;
   is_deleted?: boolean;
+  permission?: number;
+
 }
 
 export interface FileItem {
@@ -15,6 +17,7 @@ export interface FileItem {
   name: string;
   type: string;
   modifiedTime?: string;
+  permission?: number;
 }
 
 export interface MusicRecord extends FileRecord{

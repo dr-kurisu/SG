@@ -7,13 +7,12 @@ describe('Database Integration Tests', () => {
   const user_id = "admin";
   
   beforeAll(async () => {
-    // 使用真实初始化逻辑
-    clearDatabase();
+    clearDatabase()
     db = await initDB();
   });
 
   test('Full file insert and retrieve flow', async () => {
-    const fileId = await FileHandler.insert({
+    const file_id = await FileHandler.insert({
       user_id: user_id,
       filename: 'music.mp3',
       filepath: '/music',
@@ -48,10 +47,28 @@ describe('Database Integration Tests', () => {
     expect(music).toBe(undefined);
   });
 
-  // upload file with invlaid character
+  // upload file with invalid character
 
   // upload single valid file
 
   // upload file path invalid
 
+});
+
+describe('File field update', () => {
+  test('Normal case', async () => {
+    const file_id = await FileHandler.insert({
+      user_id: "test",
+      filename: 'music.mp3',
+      filepath: '/music',
+      size: 1024,
+      type: 'audio/mpeg'
+    });
+    const oldFile = await FileHandler.getById(file_id, "test");
+    expect(oldFile?.permission).toBe(0);
+    const result = await FileHandler.updatePermissionById(file_id, "test", 1);
+    const newFile = await FileHandler.getById(file_id, "test");
+    expect(result).toBe(true);
+    expect(newFile?.permission).toBe(1);
+  });
 });

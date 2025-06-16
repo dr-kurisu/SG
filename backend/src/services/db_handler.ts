@@ -8,14 +8,16 @@ let db: Database | null = null;
 export const initDB = async (): Promise<Database> => {
     if (!db) {
         console.log("Creating DB file ...");
+        const dbName = process.env.NODE_ENV === 'test' ? "test.db" : "files.db"
         db = await open({
-            filename: path.resolve(__dirname, '../../data/files.db'),
+            filename: path.resolve(__dirname, `../../data/${dbName}`),
             driver: sqlite3.Database,
         });
         // Files table
         await db.exec(`
             CREATE TABLE IF NOT EXISTS files (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                permission INTEGER DEFAULT 0,
                 user_id TEXT NOT NULL,
                 filename TEXT NOT NULL,
                 filepath TEXT NOT NULL,
@@ -116,6 +118,21 @@ export const FileHandler = {
         );
         return file;
     },
+    //更新权限byId
+    updatePermissionById: async(id: number, user_id:string, permission: number): Promise<Boolean> =>{
+        db =await initDB();
+        await db.run(`
+            UPDATE files SET permission = ?
+            WHERE user_id = ? AND
+            id = ?`,
+            [permission, user_id, id]
+        );
+        //1.更改的permission不能大于current permission
+        
+        //2.更改的permission不能为负数
+        return true;
+    },
+
     
     // Given path return files in query path
     getFilesByPath: async (user_id: string, queryPath: string): Promise<FileRecord[]> => {

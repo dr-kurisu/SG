@@ -5,11 +5,11 @@ import { FileRecord } from "./types";
 import { FileHandler } from "./db_handler";
 import { lookup } from "mime-types";
 import { insertMusicRecord } from "./music";
-import { parseFile } from 'music-metadata';
 
 
 export const clearDatabase = () => {
-  const dbPath = path.resolve(__dirname, '../../data/files.db');
+  const dbName = process.env.NODE_ENV === 'test' ? "test.db" : "files.db"
+  const dbPath = path.resolve(__dirname, `../../data/${dbName}`);
   try {
     fs.unlinkSync(dbPath);
     console.log(`数据库删除成功`);
@@ -19,6 +19,7 @@ export const clearDatabase = () => {
 }
 
 export const scanDirectory = async (dirRelativePath: string): Promise<string[]> => {
+  const { parseFile } = await import( 'music-metadata' );
   const dirPath = path.posix.join(getUploadDir(), dirRelativePath);
   console.log(`开始扫描目录: ${dirPath}`);
   
