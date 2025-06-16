@@ -364,12 +364,13 @@ export const PlayListEntryHandler = {
 
         // Get max position
 
-        const maxResult = await db.get<number>(`
-            SELECT MAX(position) FROM playlistEntries
-            WHERE playlist_id = ?;
-            `, [playlist_id]) || -1;
+        const row = await db.get<{ 'MAX(position)': number | null }>(`
+        SELECT MAX(position) FROM playlistEntries
+        WHERE playlist_id = ?;
+        `, [playlist_id]);
 
-        const nextPosition = maxResult + 1;
+        const maxPosition = row?.['MAX(position)'] ?? -1;
+        const nextPosition = maxPosition + 1;
         console.log(`NextPosition: ${nextPosition}`);
 
         // Insert record

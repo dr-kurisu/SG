@@ -100,7 +100,7 @@ describe('Database Integration Tests', () => {
       }
     await PlayListEntryHandler.insertEntryByPlayListID(user_id, mockEntry);
   
-    const result = await PlayListEntryHandler.getEntriesByPlayListID(100, 'test');
+    const result = await PlayListEntryHandler.getEntriesByPlayListID(playlist_id, 'test');
 
     expect(result.length).toBe(1);
     expect(result[0].music_id).toBe(music_id);
