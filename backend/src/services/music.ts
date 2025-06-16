@@ -1,5 +1,5 @@
-import { FileRecord, MusicRecord } from "./types"
-import { MusicHandler, FileHandler } from "./db_handler"
+import { FileRecord, MusicRecord, PlayList, PlaylistEntry } from "./types"
+import { MusicHandler, FileHandler, PlayListHandler, PlayListEntryHandler } from "./db_handler"
 
 // Insert music into database
 export const insertMusicRecord = async (
@@ -52,18 +52,73 @@ export const getMusicByFileID = async (user_id: string, file_id: number): Promis
     }
 }
 
-// Get all music in given playlist
+// Get all music entries in given playlist
+export const getEntriesByPlayListID = async (playlist_id: number, user_id: string): Promise<PlaylistEntry[] | []> => {
+    try {
+        const entries = await PlayListEntryHandler.getEntriesByPlayListID(playlist_id, user_id);
+        return entries;
+    } catch(error) {
+        console.error(error);
+        return [];
+    }
+};
 
 
 // Add Music into given playlist
+export const insertEntryByPlayListID = async (
+  user_id: string,
+  playlist_id: number,
+  music_id: number
+): Promise<number> => {
+  const playlistEntry: PlaylistEntry = {
+    playlist_id,
+    music_id
+  };
+
+  try {
+    const lastID = await PlayListEntryHandler.insertEntryByPlayListID(user_id, playlistEntry);
+    if (!lastID) throw new Error("No lastID returned");
+    return lastID;
+  } catch (error) {
+    throw new Error(`Failed to insert entry into playlist ${playlist_id}: ${(error as Error).message}`);
+  }
+};
 
 
 // Remove music from given playlist
+export const removeEntryByPlayListIDByEntryID = async (
+    user_id: string,
+    playlist_id: number,
+    entry_id: number
+): Promise<void> => {
+    try {
+        const result = await PlayListEntryHandler.removeEntryByPlayListIDByEntryID(user_id, playlist_id, entry_id);
+        if (!result) throw new Error("Fail to delete entry");
+    } catch(error) {
+        throw new Error("Fail to delete entry");
+    }
+}
 
 
 // Get all playlist
+export const getAllPlaylist = async (user_id: string): Promise<PlayList[] | []> => {
+    try {
+        const playlists = await PlayListHandler.getPlayListsByUserID(user_id);
+        return playlists;
+    } catch(error) {
+        console.error(error);
+        return [];
+    }
+};
 
 
 // Remove playlist
-
-
+export const removePlaylist = async (playlist_id: number, user_id: string): Promise<boolean> => {
+    try {
+        const result = await PlayListHandler.removePlayListByID(playlist_id, user_id);
+        return result;
+    }catch (error) {
+        console.error(error);
+        return false;
+    }
+};

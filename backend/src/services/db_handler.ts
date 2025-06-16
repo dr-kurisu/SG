@@ -2,6 +2,7 @@ import sqlite3 from "sqlite3";
 import { open, Database } from 'sqlite';
 import { FileRecord, MusicRecord, PlayList, PlaylistEntry } from "./types";
 import path from "path";
+import { removeEntryByPlayListIDByEntryID } from "./music";
 
 let db: Database | null = null;
 
@@ -312,13 +313,20 @@ export const PlayListHandler = {
         return result.lastID;
     },
 
-    removePlayListByID: async (id: number, user_id: string) => {
+    removePlayListByID: async (id: number, user_id: string): Promise<boolean> => {
         db = await initDB();
-        await db.run(`
-            DELETE FROM playlist
-            WHERE id = ? AND
-            user_id = ?
-        `, [id, user_id]);
+        try {
+            await db.run(`
+                DELETE FROM playlist
+                WHERE id = ? AND
+                user_id = ?
+            `, [id, user_id]);
+            return true;
+        } catch(error) {
+            console.error(error);
+            return false;
+        }
+
     }
 };
 
@@ -331,13 +339,12 @@ export const PlayListEntryHandler = {
                 SELECT * FROM playlistEntries e
                 JOIN playlist p ON e.playlist_id = p.id
                 WHERE p.user_id = ? AND
-                e.id = ?;`,
+                e.playlist_id = ?;`,
                 [user_id, playListID]
             );
             return playListEntries;
         }catch (error) {
-            console.error(`Fail to get playList entry with ID: ${playListID} and userID: ${user_id}`);
-            return [];
+            throw new Error(`Fail to get playList entry with ID: ${playListID} and userID: ${user_id}`);
         }
     },
 
@@ -385,5 +392,37 @@ export const PlayListEntryHandler = {
             console.error(`Failed to insert playlist entry: `, error);
             throw error;
         }
+    },
+
+    removeEntryByPlayListIDByEntryID: async (
+        user_id: string,
+        playlist_id: number,
+        entry_id: number
+    ): Promise<boolean> => {
+        db = await initDB();
+        try {
+            const playlist = await db.get<{ id: number }>(`
+            SELECT id FROM playlist
+            WHERE id = ? AND user_id = ?;
+            `, [playlist_id, user_id]);
+
+            if (!playlist) {
+                throw new Error(`Unauthorized: playlist ${playlist_id} not found for user ${user_id}`);
+            }
+
+            // 执行删除
+            const result = await db.run(`
+                DELETE FROM playlistEntries
+                WHERE id = ? AND playlist_id = ?;
+                `, [entry_id, playlist_id]
+            );
+            
+            if (!result || !result.changes) throw new Error("Fail to delete entry");
+            return result.changes > 0;
+        } catch (error) {
+            console.error(`Failed to delete entry ${entry_id} from playlist ${playlist_id}`, error);
+            throw error;
+        }
     }
+
 }
