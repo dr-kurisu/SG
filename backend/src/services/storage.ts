@@ -158,8 +158,16 @@ export const removeFile = async (id: number, user_id: string): Promise<boolean> 
   let file: FileRecord | undefined;
   try {
      file = await FileHandler.getById(id, user_id);
+     if(!file?.permission){
+       console.error(file?.filename + ` Has No Necessary Field Permission ! `);
+       return false;
+     }
      if (file == undefined) {
       console.warn(`File with id: ${id} not found for user: ${user_id}`);
+      return false;
+    }
+    if (file.permission >0){
+      console.warn('Do not have permission to delete folder');
       return false;
     }
   }catch(error) {
