@@ -33,7 +33,7 @@ playlistRouter.get("/:playlist_id/entries", async (req: Request, res: Response) 
 });
 
 // 添加 music entry 到 playlist
-playlistRouter.post("/:playlist_id/entries/:music_id", async (req: Request, res: Response) => {
+playlistRouter.post("/:playlist_id/music/:music_id", async (req: Request, res: Response) => {
   const user_id = "admin";
   const { playlist_id, music_id } = req.params;
   try {
