@@ -320,4 +320,69 @@ export const PlayListHandler = {
             user_id = ?
         `, [id, user_id]);
     }
+};
+
+
+export const PlayListEntryHandler = {
+    getEntriesByPlayListID: async (playListID: number, user_id: string): Promise<PlaylistEntry[] | []> => {
+        db = await initDB();
+        try {
+            const playListEntries = await db.all<PlaylistEntry[]>(`
+                SELECT * FROM playlistEntries e
+                JOIN playlist p ON e.playlist_id = p.id
+                WHERE p.user_id = ? AND
+                e.id = ?;`,
+                [user_id, playListID]
+            );
+            return playListEntries;
+        }catch (error) {
+            console.error(`Fail to get playList entry with ID: ${playListID} and userID: ${user_id}`);
+            return [];
+        }
+    },
+
+    insertEntryByPlayListID: async (user_id: string, entry: PlaylistEntry): Promise<number | null> => {
+        db = await initDB();
+
+        const playlist_id = entry.playlist_id;
+
+        // Checking playlist exist
+        try {
+            const playlist = await db.get<{ id: number }>(`
+                SELECT id FROM playlist
+                WHERE id = ? AND user_id = ?;
+            `, [playlist_id, user_id]
+            );
+
+            if (!playlist) {
+                throw new Error(`Unauthorized: playlist ${playlist_id} not found for user ${user_id}`);
+            }
+        } catch(error) {
+            console.error(`Unauthorized: playlist ${playlist_id}`, error);
+            return null;
+        }
+
+        // Get max position
+
+        const maxResult = await db.get<number>(`
+            SELECT MAX(position) FROM playlistEntries
+            WHERE playlist_id = ?;
+            `, [playlist_id]) || -1;
+
+        const nextPosition = maxResult + 1;
+        console.log(`NextPosition: ${nextPosition}`);
+
+        // Insert record
+        try {
+            const result = await db.run(`
+                INSERT INTO playlistEntries (playlist_id, music_id, position) 
+                VALUES (?, ?, ?);`,
+                [playlist_id, entry.music_id, nextPosition]
+            );
+            return result.lastID!;
+        } catch(error) {
+            console.error(`Failed to insert playlist entry: `, error);
+            throw error;
+        }
+    }
 }

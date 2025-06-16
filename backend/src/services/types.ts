@@ -40,6 +40,6 @@ export interface PlaylistEntry {
   id?: number;
   playlist_id: number;
   music_id: number;
-  position: number;
-  added_at: string;
+  position?: number;
+  added_at?: string;
 }

@@ -5,7 +5,6 @@ import { FileRecord } from "./types";
 import { FileHandler } from "./db_handler";
 import { lookup } from "mime-types";
 import { insertMusicRecord } from "./music";
-import { parseFile } from 'music-metadata';
 
 
 export const clearDatabase = () => {
@@ -19,6 +18,7 @@ export const clearDatabase = () => {
 }
 
 export const scanDirectory = async (dirRelativePath: string): Promise<string[]> => {
+  const { parseFile } = await import('music-metadata');
   const dirPath = path.posix.join(getUploadDir(), dirRelativePath);
   console.log(`开始扫描目录: ${dirPath}`);
   
