@@ -1,21 +1,9 @@
 <template>
   <div class="flex flex-col items-center">
-    <div
-      ref="discRef"
-      
-    >
-      <template v-if="coverPath">
-          <!-- <img
-              :src="coverPath"
-              alt="cover"
-              class="w-full h-full object-cover"
-          /> -->
-      </template>
-      <template v-else>
+    <div ref="discRef">
+      <template>
           <div class="w-[400px] h-[400px]">
-              <VinylDisc 
-                :rotation="rotation"
-              />
+              <VinylDisc :rotation="rotation"/>
           </div>
       </template>
     </div>
