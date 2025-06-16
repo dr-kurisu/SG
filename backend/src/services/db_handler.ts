@@ -128,6 +128,7 @@ export const FileHandler = {
             [permission, user_id, id]
         );
         //1.更改的permission不能大于current permission
+        
         //2.更改的permission不能为负数
         return true;
     },
