@@ -52,15 +52,12 @@ describe('PlayListEntryHandler', () => {
       expect(result).toEqual(mockEntries);
     });
 
-    it('should return empty array when database query fails', async () => {
+    it('should throw error when database query fails', async () => {
       (mockDb.all as jest.Mock).mockRejectedValue(new Error('Database error'));
-      
-      const result = await PlayListEntryHandler.getEntriesByPlayListID(1, 'test1');
-      
-      expect(result).toEqual([]);
-      expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining('Fail to get playList entry with ID: 1 and userID: test1')
-      );
+
+      await expect(PlayListEntryHandler.getEntriesByPlayListID(1, 'test1'))
+        .rejects
+        .toThrow('Fail to get playList entry with ID: 1 and userID: test1');
     });
   });
 });
