@@ -1,7 +1,7 @@
 <template>
-  <div>
+  <div class="login-container">
     <h2>Login</h2>
-    <form @submit.prevent="handleLogin">
+    <form @submit.prevent="handleLogin" class="login-form">
       <div>
         <label>Username:</label>
         <input v-model="username" type="text" required />
@@ -15,6 +15,25 @@
     <p v-if="error">{{ error }}</p>
   </div>
 </template>
+
+<style>
+.login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #f0f2f5; /* 添加背景色 */
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+</style>
+
+
 
 <script setup>
 import { ref } from 'vue'
