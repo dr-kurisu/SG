@@ -12,7 +12,7 @@ export const clearDatabase = () => {
   const dbPath = path.resolve(__dirname, `../../data/${dbName}`);
   try {
     fs.unlinkSync(dbPath);
-    console.log(`数据库删除成功`);
+    console.log(`数据库删除成功 ${dbPath}`);
   } catch (err) {
     console.error(`数据库删除失败`, err);
   }

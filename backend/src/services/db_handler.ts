@@ -1,6 +1,6 @@
 import sqlite3 from "sqlite3";
-import { open, Database } from 'sqlite';
-import { FileRecord, MusicRecord } from "./types";
+import {Database, open} from 'sqlite';
+import {FileRecord, MusicRecord} from "./types";
 import path from "path";
 
 let db: Database | null = null;
@@ -132,7 +132,15 @@ export const FileHandler = {
         return true;
     },
 
-    
+    getFileNumberByPath: async (user_id: string, filepath: string): Promise<number> => {
+        const db = await initDB();
+        const result = await db.get(
+            'SELECT COUNT(*) AS count FROM files WHERE user_id = ? AND filepath LIKE ?',
+            [user_id, `${filepath}%`]
+        );
+        return result?.count ?? 0;
+    },
+
     // Given path return files in query path
     getFilesByPath: async (user_id: string, queryPath: string): Promise<FileRecord[]> => {
         db = await initDB();
