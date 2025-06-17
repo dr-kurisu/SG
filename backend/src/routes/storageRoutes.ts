@@ -1,7 +1,15 @@
 // routes.ts
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
-import { createFolder, getFileList, storage, insertFile, removeFile, removeFolder } from '../services/storage';
+import {
+  createFolder,
+  getFileList,
+  storage,
+  insertFile,
+  removeFile,
+  removeFolder,
+  getNumberofFile
+} from '../services/storage';
 
 const storageRouter = Router()
 
@@ -57,6 +65,10 @@ storageRouter.post('/createFolder', async (req: Request, res: Response) => {
     res.status(400).send('Folder name is required');
     return;
   }
+  if (!currentPath) {
+    res.status(400).send('currentPath is required');
+    return;
+  }
   try {
     const result = await createFolder(userId, folderName, currentPath);
     if (!result.success) {
@@ -69,6 +81,23 @@ storageRouter.post('/createFolder', async (req: Request, res: Response) => {
   }catch(error: any) {
     res.status(400).send(error.message);
   }
+});
+
+storageRouter.get('/filenumber', async (req: Request, res: Response) =>{
+  const {currentPath} = req.body
+  if (!currentPath) {
+    res.status(400).send('Folder name is required');
+    return;
+  }
+  const userId = "admin";
+  try{
+    const result = await getNumberofFile(userId,currentPath);
+    res.json({ num: result, message: "Successfully get file number" });
+
+  }catch (error: any){
+    res.status(400).send(error.message);
+  }
+
 });
 
 // 删除指定文件
@@ -96,5 +125,7 @@ storageRouter.delete('/deleteFolder/:id', async (req: Request, res: Response) =>
     res.status(500).json({ error: "Deletion of folder failed" });
   }
 });
+
+
 
 export default storageRouter

@@ -4,6 +4,7 @@ import multer from 'multer';
 import { FileHandler } from './db_handler'; './db_handler';
 import { FileRecord, FileItem } from './types';
 import { v4 as uuidv4 } from 'uuid';
+import { console } from 'inspector/promises';
 
 const uploadDir = path.join(__dirname, '../../uploads').replace(/\\/g, '/');
 
@@ -55,6 +56,7 @@ export const getFileList = async (user_id: string, queryPath: string) => {
     }
   });
 };
+
 
 export const createFolder = async (userID: string, folderName: string, relativePath: string) => {
   const folderNameSanitized = folderName.replace(/[<>:"/\\|?*]/g, '');
@@ -153,6 +155,17 @@ export const removeFolder = async (id: number, user_id: string) => {
   await FileHandler.removeById(id);
   return true;
 };
+export const getNumberofFile = async (user_id : string, filepath : string) =>{
+  let num : number | undefined;
+  try {
+    num = await FileHandler.getFileNumberByPath(user_id,filepath);
+    return num;
+  }catch (error: any){
+    console.log(error);
+    return 0;
+  }
+
+}
 
 export const removeFile = async (id: number, user_id: string): Promise<boolean> => {
   let file: FileRecord | undefined;
