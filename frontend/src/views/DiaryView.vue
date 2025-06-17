@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
     import { ref } from 'vue';
-    import DiaryList from '../components/DiaryList.vue';
+    import DiaryList from '../components/Diary/DiaryList.vue';
     import DiaryEditor from '../components/DiaryEditor.vue';
     import type { Diary } from '../types';
 
