@@ -1,7 +1,8 @@
 import sqlite3 from "sqlite3";
 import { open, Database } from 'sqlite';
-import { FileRecord, MusicRecord } from "./types";
+import { FileRecord, MusicRecord, PlayList, PlaylistEntry } from "./types";
 import path from "path";
+import { removeEntryByPlayListIDByEntryID } from "./music";
 
 let db: Database | null = null;
 
@@ -290,4 +291,155 @@ export const MusicHandler = {
         );
         return music;
     }
+}
+
+
+export const PlayListHandler = {
+    getPlayListsByUserID: async (user_id: string): Promise<PlayList[] | []> => {
+        db = await initDB();
+        const playLists = await db.all<PlayList[]>(`
+            SELECT * FROM playlist
+            WHERE user_id = ?
+            ORDER BY created_time DESC`, 
+            [user_id]
+        );
+        return playLists;
+    },
+
+    getPlayListByID: async (id: number, user_id: string): Promise<PlayList | undefined> => {
+        db = await initDB();
+        const playList = await db.get<PlayList>(`
+            SELECT * FROM playlist
+            WHERE user_id = ? AND
+            id = ?`,
+            [user_id, id]
+        );
+        return playList;
+    },
+
+    insertPlayList: async (playList: PlayList): Promise<number> => {
+        db = await initDB();
+        const result = await db.run(`
+            INSERT INTO playlist (user_id, name, description, cover_path)
+            VALUES (?, ?, ?, ?);    `,
+            [playList.user_id, playList.name, playList.description, playList.cover_path]
+        );
+        if (!result.lastID) {
+            throw new Error("Insert failed. No last ID return in playList insertion");
+        }
+        return result.lastID;
+    },
+
+    removePlayListByID: async (id: number, user_id: string): Promise<boolean> => {
+        db = await initDB();
+        try {
+            await db.run(`
+                DELETE FROM playlist
+                WHERE id = ? AND
+                user_id = ?
+            `, [id, user_id]);
+            return true;
+        } catch(error) {
+            console.error(error);
+            return false;
+        }
+
+    }
+};
+
+
+export const PlayListEntryHandler = {
+    getEntriesByPlayListID: async (playListID: number, user_id: string): Promise<PlaylistEntry[] | []> => {
+        db = await initDB();
+        try {
+            const playListEntries = await db.all<PlaylistEntry[]>(`
+                SELECT * FROM playlistEntries e
+                JOIN playlist p ON e.playlist_id = p.id
+                WHERE p.user_id = ? AND
+                e.playlist_id = ?;`,
+                [user_id, playListID]
+            );
+            return playListEntries;
+        }catch (error) {
+            throw new Error(`Fail to get playList entry with ID: ${playListID} and userID: ${user_id}`);
+        }
+    },
+
+    insertEntryByPlayListID: async (user_id: string, entry: PlaylistEntry): Promise<number | null> => {
+        db = await initDB();
+
+        const playlist_id = entry.playlist_id;
+
+        // Checking playlist exist
+        try {
+            const playlist = await db.get<{ id: number }>(`
+                SELECT id FROM playlist
+                WHERE id = ? AND user_id = ?;
+            `, [playlist_id, user_id]
+            );
+
+            if (!playlist) {
+                throw new Error(`Unauthorized: playlist ${playlist_id} not found for user ${user_id}`);
+            }
+        } catch(error) {
+            console.error(`Unauthorized: playlist ${playlist_id}`, error);
+            return null;
+        }
+
+        // Get max position
+
+        const row = await db.get<{ 'MAX(position)': number | null }>(`
+        SELECT MAX(position) FROM playlistEntries
+        WHERE playlist_id = ?;
+        `, [playlist_id]);
+
+        const maxPosition = row?.['MAX(position)'] ?? -1;
+        const nextPosition = maxPosition + 1;
+        console.log(`NextPosition: ${nextPosition}`);
+
+        // Insert record
+        try {
+            const result = await db.run(`
+                INSERT INTO playlistEntries (playlist_id, music_id, position) 
+                VALUES (?, ?, ?);`,
+                [playlist_id, entry.music_id, nextPosition]
+            );
+            return result.lastID!;
+        } catch(error) {
+            console.error(`Failed to insert playlist entry: `, error);
+            throw error;
+        }
+    },
+
+    removeEntryByPlayListIDByEntryID: async (
+        user_id: string,
+        playlist_id: number,
+        entry_id: number
+    ): Promise<boolean> => {
+        db = await initDB();
+        try {
+            const playlist = await db.get<{ id: number }>(`
+            SELECT id FROM playlist
+            WHERE id = ? AND user_id = ?;
+            `, [playlist_id, user_id]);
+
+            if (!playlist) {
+                throw new Error(`Unauthorized: playlist ${playlist_id} not found for user ${user_id}`);
+            }
+
+            // 执行删除
+            const result = await db.run(`
+                DELETE FROM playlistEntries
+                WHERE id = ? AND playlist_id = ?;
+                `, [entry_id, playlist_id]
+            );
+            
+            if (!result || !result.changes) throw new Error("Fail to delete entry");
+            return result.changes > 0;
+        } catch (error) {
+            console.error(`Failed to delete entry ${entry_id} from playlist ${playlist_id}`, error);
+            throw error;
+        }
+    }
+
 }

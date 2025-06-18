@@ -28,3 +28,21 @@ export interface MusicRecord extends FileRecord{
   bitrate?: number;
   cover_path?: string;
 }
+
+export interface PlayList {
+  id?: number;
+  user_id: string;
+  name: string;
+  description: string | null;
+  cover_path: string | null;
+  created_time: string;
+  is_public: boolean;
+}
+
+export interface PlaylistEntry {
+  id?: number;
+  playlist_id: number;
+  music_id: number;
+  position?: number;
+  added_at?: string;
+}

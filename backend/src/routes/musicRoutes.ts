@@ -104,8 +104,5 @@ musicRouter.post('/add', upload.single('file'), async (req: Request, res: Respon
 
 // music/remove/:id 移除指定音乐文件
 
-// music/audio/:id 获取指定音乐文件
-
-
 
 export default musicRouter;

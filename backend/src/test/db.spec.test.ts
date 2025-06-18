@@ -1,6 +1,7 @@
-import { FileHandler, MusicHandler, initDB } from '../services/db_handler';
+import { FileHandler, MusicHandler, PlayListEntryHandler, PlayListHandler, initDB } from '../services/db_handler';
 import { Database } from 'sqlite';
 import { clearDatabase } from '../services/utili';
+import { FileRecord, MusicRecord, PlayList, PlaylistEntry } from '../services/types';
 
 describe('Database Integration Tests', () => {
   let db: Database;
@@ -53,6 +54,57 @@ describe('Database Integration Tests', () => {
 
   // upload file path invalid
 
+  // test playlistEntry
+  test('getEntriesByPlayListID returns entries for valid user and playlist', async () => {
+      const user_id = "test";
+      // insert mock file
+      const mockFile: FileRecord = {
+          user_id: user_id,
+          filename: 'test.mp3',
+          filepath: '/',
+          size: 0,
+          type: 'Audio/mp3'
+      }
+      const file_id = await FileHandler.insert(mockFile);
+  
+      // insert mock music
+      const mockMusic: MusicRecord = {
+          file_id: file_id,
+          duration: 666,
+          user_id: user_id,
+          filename: "test.mp3",
+          filepath: '/',
+          size: 0,
+          type: 'Audio/mp3'
+      } 
+      const music_id = await MusicHandler.insert(mockMusic);
+  
+      // insert mock playlist
+      const mockPlaylist: PlayList = {
+          user_id: user_id,
+          name: "MockPlatlist",
+          description: null,
+          cover_path: null,
+          created_time: '',
+          is_public: false
+      };
+      const playlist_id = await PlayListHandler.insertPlayList(mockPlaylist);
+  
+  
+      // insert mock playlist entry
+      const mockEntry: PlaylistEntry = {
+          playlist_id,
+          music_id
+      }
+    await PlayListEntryHandler.insertEntryByPlayListID(user_id, mockEntry);
+  
+    const result = await PlayListEntryHandler.getEntriesByPlayListID(playlist_id, 'test');
+
+    expect(result.length).toBe(1);
+    expect(result[0].music_id).toBe(music_id);
+    expect(result[0].position).toBe(0);
+    expect(result[0].playlist_id).toBe(playlist_id);
+  });
 });
 
 describe('File field update', () => {
