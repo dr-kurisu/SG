@@ -2,7 +2,6 @@ import sqlite3 from "sqlite3";
 import { open, Database } from 'sqlite';
 import { FileRecord, MusicRecord, PlayList, PlaylistEntry } from "./types";
 import path from "path";
-import { removeEntryByPlayListIDByEntryID } from "./music";
 
 let db: Database | null = null;
 
@@ -65,6 +64,16 @@ export const initDB = async (): Promise<Database> => {
                 FOREIGN KEY (music_id) REFERENCES music(id) ON DELETE CASCADE,
                 UNIQUE (playlist_id, music_id) -- 防止重复添加同一首歌
             );  
+        `);
+
+        // User table
+        await db.exec(`
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT UNIQUE NOT NULL,
+                username TEXT NOT NULL UNIQUE,
+                password TEXT NOT NULL
+            );
         `);
     }
     return db;
@@ -166,6 +175,7 @@ export const FileHandler = {
         );
     },
 };
+
 
 export const MusicHandler = {
     insert: async (musicRecord: MusicRecord): Promise<number> => {
