@@ -97,7 +97,8 @@ export const insertFile = async (userID: string, filename: string, relativePath:
     filename: fileNameSanitized,
     filepath: safePath,
     size: size,
-    type: type
+    type: type,
+
   };
   
   await FileHandler.insert(file);
@@ -107,6 +108,7 @@ export const removeFolder = async (id: number, user_id: string) => {
   let folder: FileRecord | undefined;
   try {
      folder = await FileHandler.getById(id, user_id);
+
      if (folder == undefined) {
       console.warn(`Folder with id: ${id} not found for user: ${user_id}`);
       return false;
@@ -123,6 +125,16 @@ export const removeFolder = async (id: number, user_id: string) => {
 
   if (folder.filepath === '/' || folder.filename === 'Music') {
     console.warn(`Do no have permission to delete Music folder`);
+    return false;
+  }
+
+  if (!folder.permission) {
+    console.error(`${path.posix.join(folder.filepath, folder.filename)} Has No Necessary Field Permission ! `);
+    return false;
+  }
+
+  if (folder.permission >0){
+    console.warn('Do not have permission to delete folder');
     return false;
   }
 
@@ -145,9 +157,18 @@ export const removeFolder = async (id: number, user_id: string) => {
 export const removeFile = async (id: number, user_id: string): Promise<boolean> => {
   let file: FileRecord | undefined;
   try {
-     file = await FileHandler.getById(id, user_id);
-     if (file == undefined) {
+    file = await FileHandler.getById(id, user_id);
+
+    if (!file) {
       console.warn(`File with id: ${id} not found for user: ${user_id}`);
+      return false;
+    }
+    if(!file.permission){
+      console.error(file?.filename + ` Has No Necessary Field Permission ! `);
+      return false;
+     }
+    if (file.permission >0){
+      console.warn('Do not have permission to delete folder');
       return false;
     }
   }catch(error) {
