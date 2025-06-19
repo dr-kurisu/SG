@@ -65,7 +65,8 @@ accountRouter.post("/register", async (req: Request, res: Response) => {
     return;
   }
   // 数据库注入用户信息
-  const id = await UserHandler.insertUser(username, password);
+  const passwordHash = await bcrypt.hash(password, 10);
+  const id = await UserHandler.insertUser(username, passwordHash);
   if (id) {
     res.status(201).json({ message: "Successfully registered user"});
   }else {

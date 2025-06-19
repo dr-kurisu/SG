@@ -15,7 +15,10 @@ import { useRoute } from 'vue-router'
 import { computed } from 'vue'
 
 const route = useRoute()
-const showNav = computed(() => !route.path.endsWith('/login'))
+const showNav = computed(() => {
+  return !(route.path.endsWith('/login') || route.path.endsWith('/register'));
+});
+
 </script>
 
 <style scoped>

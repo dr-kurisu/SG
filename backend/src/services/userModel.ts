@@ -12,7 +12,7 @@ export const UserHandler = {
         try {
             const user_id = await uuidv4()
             const result = await db.run(
-                `INSERT INTO users (username, password, user_id) VALUES (?, ?)`,
+                `INSERT INTO users (username, password, user_id) VALUES (?, ?, ?)`,
                 [username, password, user_id]
             );
             return { id: result.lastID };
