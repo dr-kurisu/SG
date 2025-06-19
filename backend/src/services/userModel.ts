@@ -2,6 +2,7 @@ import { Database } from 'sqlite';
 import { initDB } from "./db_handler";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid"
+import { userRecord } from './types';
 
 let db: Database | null = null;
 
@@ -11,7 +12,7 @@ export const UserHandler = {
         try {
             const user_id = await uuidv4()
             const result = await db.run(
-                `INSERT INTO users (username, passwordHash, user_id) VALUES (?, ?)`,
+                `INSERT INTO users (username, password, user_id) VALUES (?, ?)`,
                 [username, password, user_id]
             );
             return { id: result.lastID };
@@ -42,7 +43,7 @@ export const UserHandler = {
     checkUser: async (username: string): Promise<string | null> => {
         db = db ?? await initDB();
         const user = await db.get(
-            `SELECT id, username, passwordHash FROM users WHERE username = ?`,
+            `SELECT user_id FROM users WHERE username = ?`,
             [username]
         );
         if (!user || !user.user_id) {
@@ -55,20 +56,15 @@ export const UserHandler = {
     verifyUser: async (username: string, password: string): Promise<boolean> => {
         db = db ?? await initDB();
 
-        const user = await db.get<{
-            id: number;
-            username: string;
-            passwordHash: string;
-        }>(
-            `SELECT id, username, passwordHash FROM users WHERE username = ?`,
+        const user = await db.get<userRecord>(
+            `SELECT id, username, password FROM users WHERE username = ?`,
             [username]
         );
 
         if (!user) {
             return false;
         }
-
-        const match = await bcrypt.compare(password, user.passwordHash);
+        const match = await bcrypt.compare(password, user.password);
         return match;
     }
 }

@@ -10,7 +10,7 @@ const SECRET_KEY = "your-secret-key";
 // 登录接口
 accountRouter.post("/login", async (req: Request, res: Response) => {
   const { username, password } = req.body;
-
+  
   if (!username || !password) {
     res.status(400).json({message: "Required field username or password is empty"});
     return;
@@ -20,14 +20,14 @@ accountRouter.post("/login", async (req: Request, res: Response) => {
   const user_id = await UserHandler.checkUser(username);
 
   if (!user_id) {
-    res.status(401).json({ message: "User does not exist" });
+    res.status(404).json({ message: "User does not exist" });
     return;
   }
 
   // 调用对应函数匹配密码
   const result = await UserHandler.verifyUser(username, password);
   if (!result) {
-    res.status(401).json({ error: "用户名或密码错误" });
+    res.status(401).json({ message: "Username or Password wrong" });
     return;
   }
 
@@ -64,8 +64,6 @@ accountRouter.post("/register", async (req: Request, res: Response) => {
     res.status(401).json({message: "User already exist"});
     return;
   }
-
-  const passwordHash = await bcrypt.hash(password, 10);
   // 数据库注入用户信息
   const id = await UserHandler.insertUser(username, password);
   if (id) {

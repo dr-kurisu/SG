@@ -2,6 +2,7 @@ import sqlite3 from "sqlite3";
 import { open, Database } from 'sqlite';
 import { FileRecord, MusicRecord, PlayList, PlaylistEntry } from "./types";
 import path from "path";
+import bcrypt from "bcryptjs";
 
 let db: Database | null = null;
 
@@ -72,9 +73,18 @@ export const initDB = async (): Promise<Database> => {
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id TEXT UNIQUE NOT NULL,
                 username TEXT NOT NULL UNIQUE,
-                password TEXT NOT NULL
+                password TEXT NOT NULL,
+                permission INTEGER DEFAULT 0
             );
         `);
+
+        // Insert admin
+        const passwordHash = await bcrypt.hash("admin", 10);
+        await db.run(`
+            INSERT INTO users (user_id, username, password, permission)
+            VALUES (?, ?, ?, ?)`,
+            ["admin", "admin", passwordHash, 999]
+        );
     }
     return db;
 };
