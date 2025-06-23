@@ -35,7 +35,7 @@
 <script setup>
 import Swal from 'sweetalert2';
 import { ref } from 'vue';
-import axios from 'axios';
+import { instance as axiosInstance } from '@/api/axios';
 import { useRouter } from 'vue-router';
 
 const username = ref('');
@@ -55,7 +55,7 @@ async function handleRegister() {
     return;
   }
   try{
-    const res = await axios.post("/api/account/register", {username: username.value, password: password.value});
+    const res = await axiosInstance.post("/api/account/register", {username: username.value, password: password.value});
     error.value = "";
     router.push('/login');
   } catch(err) {

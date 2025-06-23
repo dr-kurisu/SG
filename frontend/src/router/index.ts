@@ -7,7 +7,7 @@ import Preview from '@/views/Preview.vue';
 import LoginView from "@/views/LoginView.vue";
 import RegisterView from "@/views/RegisterView.vue";
 
-const routes = [
+export const routes = [
     { path: '/',name: "Home", component: HomeView},
     { path: '/clouddisk', name: 'CloudDisk', component: CloudDiskView },
     { path: '/musicplayer', name: 'MusicPlayer', component: MusicPlayerView},

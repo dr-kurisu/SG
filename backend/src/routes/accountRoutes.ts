@@ -20,7 +20,7 @@ accountRouter.post("/login", async (req: Request, res: Response) => {
   const user_id = await UserHandler.checkUser(username);
 
   if (!user_id) {
-    res.status(404).json({ message: "User does not exist" });
+    res.status(401).json({ message: "User does not exist" });
     return;
   }
 
@@ -41,7 +41,7 @@ accountRouter.post("/login", async (req: Request, res: Response) => {
     { expiresIn: "1h" }
   );
 
-  res.json({ 
+  res.status(200).json({ 
     token,
     user: {
       id: user_id,
@@ -69,8 +69,10 @@ accountRouter.post("/register", async (req: Request, res: Response) => {
   const id = await UserHandler.insertUser(username, passwordHash);
   if (id) {
     res.status(201).json({ message: "Successfully registered user"});
+    return;
   }else {
     res.status(500).json({ message: "Database error: Cannot insert user info"});
+    return;
   }
 });
 

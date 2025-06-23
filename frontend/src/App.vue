@@ -13,11 +13,17 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
 import { computed } from 'vue'
+import axios from "axios";
 
 const route = useRoute()
 const showNav = computed(() => {
   return !(route.path.endsWith('/login') || route.path.endsWith('/register'));
 });
+
+const token = localStorage.getItem('token');
+if (token || typeof token === 'string') {
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
 
 </script>
 

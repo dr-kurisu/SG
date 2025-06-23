@@ -35,7 +35,8 @@
 <script setup>
 import Swal from 'sweetalert2';
 import { ref } from 'vue';
-import axios from 'axios';
+import { instance as axiosInstance } from '@/api/axios';
+import axios from "axios";
 import { useRouter } from 'vue-router';
 
 const username = ref('');
@@ -55,11 +56,16 @@ async function handleLogin() {
     return;
   }
   try{
-    const res = await axios.post("/api/account/login", {username: username.value, password: password.value});
+    const res = await axiosInstance.post("/api/account/login", {username: username.value, password: password.value});
     if (res.data?.token) {
-        localStorage.setItem('token', res.data.token);
-        error.value = "";
-        router.push('/');
+      const token = res.data?.token;
+      if (typeof token !== 'string' || !token) {
+        throw new Error('Token is missing or invalid');
+      }
+      localStorage.setItem('token', token);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      error.value = "";
+      router.push('/');
     }else {
       error.value = 'Login failed: Invalid credentials'
     }
