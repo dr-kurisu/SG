@@ -46,3 +46,11 @@ export interface PlaylistEntry {
   position?: number;
   added_at?: string;
 }
+
+export interface userRecord {
+  id?: number;
+  username: string;
+  password: string;
+  permission: number;
+}
+

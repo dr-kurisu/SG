@@ -2,7 +2,7 @@ import sqlite3 from "sqlite3";
 import { open, Database } from 'sqlite';
 import { FileRecord, MusicRecord, PlayList, PlaylistEntry } from "./types";
 import path from "path";
-import { removeEntryByPlayListIDByEntryID } from "./music";
+import bcrypt from "bcryptjs";
 
 let db: Database | null = null;
 
@@ -68,6 +68,25 @@ export const initDB = async (): Promise<Database> => {
                 UNIQUE (playlist_id, music_id) -- 防止重复添加同一首歌
             );  
         `);
+
+        // User table
+        await db.exec(`
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT UNIQUE NOT NULL,
+                username TEXT NOT NULL UNIQUE,
+                password TEXT NOT NULL,
+                permission INTEGER DEFAULT 0
+            );
+        `);
+
+        // Insert admin
+        const passwordHash = await bcrypt.hash("admin", 10);
+        await db.run(`
+            INSERT INTO users (user_id, username, password, permission)
+            VALUES (?, ?, ?, ?)`,
+            ["admin", "admin", passwordHash, 999]
+        );
     }
     return db;
 };
@@ -183,6 +202,7 @@ export const FileHandler = {
         );
     },
 };
+
 
 export const MusicHandler = {
     insert: async (musicRecord: MusicRecord): Promise<number> => {

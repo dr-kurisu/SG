@@ -1,5 +1,6 @@
 import { ref } from 'vue';
-import axios from 'axios';
+import { instance as axiosInstance } from '@/api/axios';
+import axios from "axios";
 import Swal from 'sweetalert2'
 
 export interface FileItem {
@@ -26,12 +27,18 @@ export const closeModal = () => {
 
 export const fetchFiles = async (path: string = '/') => {
   try {
-    const res = await axios.get<FileItem[]>('/api/files', {
+    const res = await axiosInstance.get<FileItem[]>('/api/files', {
       params: { path }
-    })
+    });
+    
     files.value = res.data;
+
     // console.log('当前路径:', path, '文件列表:', files.value.map(v => v.name));
-  } catch (err) {
+  } catch (err: any) {
+    if (err.response.status === 401 || err.response.status === 403) {
+      // 想办法跳转
+      return;
+    }
     Swal.fire({
       icon: 'error',
       title: '错误',
@@ -82,7 +89,7 @@ export const handleUpload = async (event: Event) => {
   try {
     const formData = new FormData();
     formData.append('file', file, encodeURIComponent(file.name));
-    await axios.post(`/api/upload?path=${encodeURIComponent(currentPath.value)}`, formData, {
+    await axiosInstance.post(`/api/upload?path=${encodeURIComponent(currentPath.value)}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       }
@@ -107,7 +114,7 @@ export const createFolder = async (event: Event) => {
   }
 
   try {
-    const response = await axios.post('/api/createFolder', {
+    const response = await axiosInstance.post('/api/createFolder', {
       folderName: folderName.value,
       currentPath: currentPath.value
     });
@@ -141,7 +148,7 @@ export const createFolder = async (event: Event) => {
 export const removeFile = async (id: number, file_type: string) => {
   if (file_type === 'folder') {
     try {
-      const response = await axios.delete(`/api/deleteFolder/${id}`);
+      const response = await axiosInstance.delete(`/api/deleteFolder/${id}`);
       fetchFiles(currentPath.value);
     } catch (error) {
       Swal.fire({
@@ -155,7 +162,7 @@ export const removeFile = async (id: number, file_type: string) => {
     return;
   }else {
     try {
-      const response = await axios.delete(`/api/delete/${id}`);
+      const response = await axiosInstance.delete(`/api/delete/${id}`);
     } catch (error) {
       Swal.fire({
         icon: 'error',
