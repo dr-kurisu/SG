@@ -168,8 +168,8 @@
 </template>
 
 <script lang="ts" setup>
-import { files, folderName, showModal, currentPath, fetchFiles, handleUpload, openModal, refresh, closeModal, getFileIcon, createFolder, removeFile } from '../storage/cloudstorage'
-import type { FileItem } from '../storage/cloudstorage';
+import { files, folderName, showModal, currentPath, fetchFiles, handleUpload, openModal, refresh, closeModal, getFileIcon, createFolder, removeFile,getNumberofFile } from '../Storage/cloudstorage'
+import type { FileItem } from '../Storage/cloudstorage';
 import { useRouter, useRoute } from 'vue-router';
 import { onMounted, computed, ref } from 'vue';
 import Swal from 'sweetalert2'
@@ -211,7 +211,7 @@ const removeFiles = async () => {
   }
   const result = await Swal.fire({
     title: '确认删除',
-    text: `确定要删除 ${selectFileItems.value.size} 个文件吗？`,
+    text: `确定要删除 ${selectFileItems.value.size} 个文件吗？当前剩余${await getNumberofFile()}文件`,
     icon: 'warning',
     showCancelButton: true,
     confirmButtonText: '删除',

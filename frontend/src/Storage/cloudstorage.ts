@@ -136,6 +136,17 @@ export const createFolder = async (event: Event) => {
     }
   }
 };
+export const getNumberofFile = async ( ) =>{
+  try {
+    const response =await axios.get('/api/filenumber',{
+      params:{
+        currentPath:currentPath
+      }
+    });
+    return response.data
+
+  } catch (error){}
+};
 
 // Remove given file by ID
 export const removeFile = async (id: number, file_type: string) => {
