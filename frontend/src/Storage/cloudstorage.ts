@@ -140,7 +140,7 @@ export const getNumberofFile = async ( ) =>{
   try {
     const response =await axios.get('/api/filenumber',{
       params:{
-        currentPath:currentPath
+        currentPath:currentPath.value
       }
     });
     return response.data
