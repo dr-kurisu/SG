@@ -4,7 +4,6 @@
     <nav v-if="showNav">
       <router-link to="/">Home</router-link>
       <router-link to="/clouddisk">Cloud Disk</router-link>
-      <router-link to="/musicplayer">Music</router-link>
     </nav>
     <router-view />
   </div>

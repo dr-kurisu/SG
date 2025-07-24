@@ -3,20 +3,18 @@ import cors from 'cors';
 import path from 'path';
 
 import storageRouter from './storageRoutes';
-import musicRouter from './musicRoutes';
 import previewRouter from './previewRoutes';
 import { clearDirectory, clearDatabase } from '../services/utili';
-import { scanDirectory } from '../services/utili';
+// import { scanDirectory } from '../services/utili';
 import accountRouter from './accountRoutes';
 import authenticateToken from '../middlerware/authToken';
-import playlistRouter from './playlistRoutes';
 // import diaryRouter from './diary';
 
 
 
 const initializeDevEnvironment = async () => {
   await clearDatabase();
-  await scanDirectory("/");
+  // await scanDirectory("/");
   console.log("dev env initialized.");
 };
 
@@ -38,8 +36,6 @@ const initializeDevEnvironment = async () => {
 
   app.use('/api', storageRouter);
   app.use('/api/preview', previewRouter);
-  app.use('/api/music', musicRouter);
-  app.use('/api/playlist', playlistRouter);
   app.use('/music', express.static(path.posix.join(__dirname, '../uploads/Music')));
 
   app.listen(PORT, () => {

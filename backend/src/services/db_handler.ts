@@ -29,45 +29,6 @@ export const initDB = async (): Promise<Database> => {
                 is_deleted BOOLEAN DEFAULT 0
             );
         `);
-        // Music table
-        await db.exec(`
-            CREATE TABLE IF NOT EXISTS music (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                file_id INTEGER NOT NULL,
-                artist TEXT,
-                year INTEGER,
-                duration REAL, -- second
-                bitrate INTEGER, -- kbps
-                cover_path TEXT,
-                FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE
-            );            
-        `);
-        // PlayList table
-        await db.exec(`
-            CREATE TABLE IF NOT EXISTS playlist (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id TEXT NOT NULL,
-                name TEXT NOT NULL,
-                description TEXT,
-                cover_path TEXT,
-                created_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-                is_public BOOLEAN DEFAULT 0
-            );  
-        `);
-
-        // Playlist entries
-        await db.exec(`
-            CREATE TABLE IF NOT EXISTS playlistEntries (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                playlist_id INTEGER NOT NULL,
-                music_id INTEGER NOT NULL,
-                position INTEGER NOT NULL, -- 播放列表中的顺序
-                added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (playlist_id) REFERENCES playlist(id) ON DELETE CASCADE,
-                FOREIGN KEY (music_id) REFERENCES music(id) ON DELETE CASCADE,
-                UNIQUE (playlist_id, music_id) -- 防止重复添加同一首歌
-            );  
-        `);
 
         // User table
         await db.exec(`
