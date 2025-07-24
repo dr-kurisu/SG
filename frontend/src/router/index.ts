@@ -10,7 +10,7 @@ import RegisterView from "@/views/RegisterView.vue";
 export const routes = [
     { path: '/',name: "Home", component: HomeView},
     { path: '/clouddisk', name: 'CloudDisk', component: CloudDiskView },
-    { path: '/musicplayer', name: 'MusicPlayer', component: MusicPlayerView},
+    { path: '/playlist', name: 'PlayList', component: () => import('@/components/MusicPlayer/PlayList.vue')},
     { path: '/preview', name: 'Preview', component: Preview},
     { path: '/login', name: "Login", component: LoginView},
     { path: '/register', name: "Register", component: RegisterView}

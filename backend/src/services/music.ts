@@ -122,3 +122,26 @@ export const removePlaylist = async (playlist_id: number, user_id: string): Prom
         return false;
     }
 };
+
+// Create new playlist
+export const createPlaylist = async (
+    user_id: string,
+    name: string,
+    description?: string,
+    cover_path?: string
+): Promise<number> => {
+    try {
+        const playlist: PlayList = {
+            user_id,
+            name,
+            description: description || null,
+            cover_path: cover_path || null,
+            created_time: new Date().toISOString(),
+            is_public: false
+        };
+        const playlist_id = await PlayListHandler.insertPlayList(playlist);
+        return playlist_id;
+    } catch (error) {
+        throw new Error(`Failed to create playlist: ${(error as Error).message}`);
+    }
+};

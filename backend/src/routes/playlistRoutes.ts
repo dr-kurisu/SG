@@ -5,6 +5,7 @@ import {
   getEntriesByPlayListID,
   insertEntryByPlayListID,
   removeEntryByPlayListIDByEntryID,
+  createPlaylist,
 } from "../services/music";
 
 const playlistRouter = express.Router();
@@ -14,6 +15,26 @@ playlistRouter.get("/getAllPlaylists", async (req: Request, res: Response) => {
   const user_id = "admin";
   const playlists = await getAllPlaylist(user_id);
   res.status(200).json(playlists);
+});
+
+// 创建新的 playlist
+playlistRouter.post("/", async (req: Request, res: Response) => {
+  const user_id = "admin";
+  const { name, description, cover_path } = req.body;
+
+  console.log(name, description, cover_path);
+  
+  if (!name) {
+    res.status(400).json({ error: "Playlist name is required" });
+    return;
+  }
+  
+  try {
+    const playlist_id = await createPlaylist(user_id, name, description, cover_path);
+    res.status(201).json({ playlist_id });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
 });
 
 // 删除 playlist
@@ -56,4 +77,4 @@ playlistRouter.delete("/:playlist_id/entries/:entry_id", async (req: Request, re
   }
 });
 
-export default playlistRouter;
+export default playlistRouter; 
