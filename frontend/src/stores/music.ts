@@ -1,32 +1,21 @@
 import { defineStore } from 'pinia'
 import { mockPlaylist } from '@/mock/mockData'
+import type { Song, PlayerState } from "@/types/types"
 
-interface PlayerState {
-  currentSong: Song | null
-  playlist: Song[]
-  isPlaying: boolean
-  volume: number
-  progress: number
-}
-
-interface Song {
-  id: string
-  title: string
-  artist: string
-  url: string
-}
 
 export const usePlayerStore = defineStore('player', {
     state: (): PlayerState => ({
-        currentSong: mockPlaylist[0],
+        currentSong: null,
         playlist: mockPlaylist || [],
         isPlaying: false,
         volume: 1.0,
-        progress: 0
+        progress: 0,
+        duration: mockPlaylist[0]?.duration || 0
     }),
 
     getters: {
         currentTitle: (state: PlayerState) => state.currentSong ? state.currentSong : "",
+        currentPlaylist: (state: PlayerState) => state.playlist,
         isEmpty: (state: { playlist: any[] }) => state.playlist.length === 0,
     },
 
@@ -64,6 +53,20 @@ export const usePlayerStore = defineStore('player', {
 
         setProgress(second: number) {
             this.progress = second
+        },
+
+        setDuration(duration: number) {
+            this.duration = duration
+        },
+        
+        setCurrentSong(song: Song) {
+            this.currentSong = song;
+            this.progress = 0;
+            this.duration = song.duration || 0;
+        },
+        
+        updatePlaylist(songs: Song[]) {
+            this.playlist = songs;
         }
     }
 })
