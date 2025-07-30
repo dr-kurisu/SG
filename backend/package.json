@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx watch src/routes/index.ts",
-    "test": "jest"
+    "test": "cross-env NODE_ENV=test jest --runInBand"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +15,7 @@
     "chokidar": "^4.0.3",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "fs-extra": "^11.3.0",
     "jsonwebtoken": "^9.0.2",
     "mime-types": "^3.0.1",
     "multer": "^1.4.5-lts.2",
@@ -26,6 +27,7 @@
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
+    "@types/fs-extra": "^11.0.4",
     "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/mime-types": "^3.0.1",

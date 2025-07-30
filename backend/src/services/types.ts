@@ -9,7 +9,7 @@ export interface FileRecord {
   updated_time?: string;
   is_deleted?: boolean;
   permission?: number;
-
+  require_password?: boolean;
 }
 
 export interface FileItem {

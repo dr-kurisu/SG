@@ -16,7 +16,7 @@ export interface Playlist {
 }
 
 
-interface PlayerState {
+export interface PlayerState {
   currentSong: Song | null
   playlist: Song[]
   isPlaying: boolean

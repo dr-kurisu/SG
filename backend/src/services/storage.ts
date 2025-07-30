@@ -7,11 +7,17 @@ import { v4 as uuidv4 } from 'uuid';
 
 const uploadDir = path.join(__dirname, '../../uploads').replace(/\\/g, '/');
 
+
 export const storage = multer.diskStorage({
   destination(req, file, cb) {
+    // Get user_id
+    const user_id = req.user!.user_id;
+    if (!user_id) return cb(new Error('User ID missing'), '');
+
     const rawPath = typeof req.query.path === 'string' ? req.query.path : '';
     const relativePath = decodeURIComponent(rawPath).replace(/\.\./g, '');
-    const fullPath = path.posix.join(uploadDir, relativePath);
+
+    const fullPath = path.posix.join(uploadDir, user_id, relativePath);
     fs.mkdirSync(fullPath, { recursive: true });
     cb(null, fullPath);
   },
@@ -27,10 +33,16 @@ export const storage = multer.diskStorage({
 
 
 export const getFileList = async (user_id: string, queryPath: string) => {
-  const safePath = decodeURIComponent(queryPath || '/').replace(/\.\./g, '')
-  const fullDir = path.posix.join(uploadDir, safePath)
-  const dbFiles = await FileHandler.getFilesByPath(user_id, safePath);
-  // console.log(dbFiles, safePath);
+  const safePath = decodeURIComponent(queryPath || '/').replace(/\.\./g, '');
+  const fullDir = path.posix.join(uploadDir, user_id, safePath);
+  let dbFiles: FileRecord[]
+  try {
+    dbFiles = await FileHandler.getFilesByPath(user_id, safePath);
+  } catch (err) {
+    console.log(err);
+    return [];
+  }
+  
   return dbFiles.map(file => {
     const fullPath = path.posix.join(fullDir, file.filename);
     let mtime = file.updated_time;
@@ -56,10 +68,10 @@ export const getFileList = async (user_id: string, queryPath: string) => {
   });
 };
 
-export const createFolder = async (userID: string, folderName: string, relativePath: string) => {
+export const createFolder = async (user_id: string, folderName: string, relativePath: string) => {
   const folderNameSanitized = folderName.replace(/[<>:"/\\|?*]/g, '');
   const safePath = decodeURIComponent(relativePath).replace(/\.\./g, '');
-  const folderPath = path.posix.join(uploadDir, safePath, folderNameSanitized);
+  const folderPath = path.posix.join(uploadDir, user_id, safePath, folderNameSanitized);
 
   if (fs.existsSync(folderPath)) {
     return { success: false, message: "Folder already exists" };
@@ -70,7 +82,7 @@ export const createFolder = async (userID: string, folderName: string, relativeP
 
     // update info in DB
     const folderRecord: FileRecord = {
-      user_id: userID,
+      user_id: user_id,
       filename: folderName,
       filepath: safePath,
       size: 0,
@@ -98,7 +110,6 @@ export const insertFile = async (userID: string, filename: string, relativePath:
     filepath: safePath,
     size: size,
     type: type,
-
   };
   
   await FileHandler.insert(file);
@@ -123,23 +134,23 @@ export const removeFolder = async (id: number, user_id: string) => {
     return false;
   }
 
-  if (folder.filepath === '/' || folder.filename === 'Music') {
+  if (folder.filename === 'Music') {
     console.warn(`Do no have permission to delete Music folder`);
     return false;
   }
 
-  if (!folder.permission) {
+  if (folder.permission == null) {
     console.error(`${path.posix.join(folder.filepath, folder.filename)} Has No Necessary Field Permission ! `);
     return false;
   }
 
-  if (folder.permission >0){
+  if (folder.permission > 0){
     console.warn('Do not have permission to delete folder');
     return false;
   }
 
   try {
-    await fs.promises.rm(path.posix.join(uploadDir, folder.filepath, folder.filename), { recursive: true });
+    await fs.promises.rm(path.posix.join(uploadDir, user_id, folder.filepath, folder.filename), { recursive: true });
     await FileHandler.removeByStartPath(path.posix.join(folder.filepath, folder.filename), user_id);
     console.log(`Successfully deleted folder ${folder.filename} at path: ${folder.filepath}`);
   }catch(error: any) {
@@ -163,10 +174,10 @@ export const removeFile = async (id: number, user_id: string): Promise<boolean> 
       console.warn(`File with id: ${id} not found for user: ${user_id}`);
       return false;
     }
-    if(!file.permission){
+    if(file.permission == null){
       console.error(file?.filename + ` Has No Necessary Field Permission ! `);
       return false;
-     }
+    }
     if (file.permission >0){
       console.warn('Do not have permission to delete folder');
       return false;
@@ -176,8 +187,9 @@ export const removeFile = async (id: number, user_id: string): Promise<boolean> 
     return false;
   }
 
+  // Physical deletion
   try {
-    await fs.promises.unlink(path.posix.join(uploadDir, file.filepath, file.filename));
+    await fs.promises.unlink(path.posix.join(uploadDir, user_id, file.filepath, file.filename));
     console.log(`Successfully deleted file ${file.filename} at path: ${file.filepath}`);
   }catch(error: any) {
     if (error.code === 'ENOENT') {
