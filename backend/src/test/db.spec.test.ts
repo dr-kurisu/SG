@@ -75,3 +75,9 @@ describe('File field update', () => {
     expect(newFile?.require_password).toBe(1);
   });
 });
+
+describe('User table test', () => {
+  test('Normal case', async() => {
+    // Todo
+  });
+});

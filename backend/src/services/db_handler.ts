@@ -187,6 +187,7 @@ export const FileHandler = {
             [`${startPath}%`, user_id]
         );
     },
+    
     // 更新是否为加密文件夹
     updateRequirePassword: async (id: number, newValue: boolean) => {
         db = await initDB();
@@ -198,3 +199,19 @@ export const FileHandler = {
         );
     },
 };
+
+export const UserHandler = {
+    // Todo
+}
+
+export const MusicHandler = {
+    // Todo
+}
+
+export const PlayListHandler = {
+    // Todo
+}
+
+export const PlayListEntriesHandler = {
+    // Todo
+}
