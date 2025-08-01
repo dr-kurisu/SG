@@ -35,7 +35,7 @@ export const storage = multer.diskStorage({
 export const getFileList = async (user_id: string, queryPath: string) => {
   const safePath = decodeURIComponent(queryPath || '/').replace(/\.\./g, '');
   const fullDir = path.posix.join(uploadDir, user_id, safePath);
-  let dbFiles: FileRecord[]
+  let dbFiles: FileRecord[];
   try {
     dbFiles = await FileHandler.getFilesByPath(user_id, safePath);
   } catch (err) {

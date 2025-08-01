@@ -1,16 +1,27 @@
 import request from "supertest";
 import express from "express";
 import accountRouter from "../routes/accountRoutes";
+import { v4 as uuidv4 } from 'uuid';
 
-jest.mock("../services/userModel", () => ({
+jest.mock("../services/db_handler", () => ({
     UserHandler: {
-        checkUser: jest.fn(),
+        getUserByUsername: jest.fn(),
         verifyUser: jest.fn(),
-        insertUser: jest.fn()
+        insert: jest.fn()
     },
 }));
 
-import { UserHandler } from "../services/userModel";
+const testUserRecord: userRecord = {
+  user_id: uuidv4(),
+  username: "testRoute",
+  password: "123456",
+  permission: 1
+}
+
+
+import { UserHandler, disconnectDB } from "../services/db_handler";
+import { userRecord } from "../services/types";
+import { clearDatabase,  } from "../services/utili";
 
 const app = express();
 app.use(express.json());
@@ -20,22 +31,22 @@ app.use("/api/account", accountRouter);
 describe("Test account router", () => {
     describe("POST /api/account/login", () => {
         test("Should return token when successfully login", async () => {
-            (UserHandler.checkUser as jest.Mock).mockResolvedValue("test_user_id");
+            (UserHandler.getUserByUsername as jest.Mock).mockResolvedValue(testUserRecord);
             (UserHandler.verifyUser as jest.Mock).mockResolvedValue(true);
 
             const res = await request(app)
                 .post("/api/account/login")
-                .send({username: "test", password: "123"});
+                .send({username: testUserRecord.username, password: testUserRecord.password});
             expect(res.status).toBe(200);
             expect(res.body.token).toBeDefined;
-            expect(res.body.user).toEqual({ id: "test_user_id", username: "test"});
+            expect(res.body.user).toEqual({ user_id: testUserRecord.user_id, username: testUserRecord.username});
         });
 
         test("Should return 401 when user ont exist", async () => {
-            (UserHandler.checkUser as jest.Mock).mockResolvedValue(null);
+            (UserHandler.getUserByUsername as jest.Mock).mockResolvedValue(null);
             const res = await request(app)
                 .post("/api/account/login")
-                .send({ username: "test", password: "123"});
+                .send({ username: testUserRecord.username, password: testUserRecord.password});
             expect(res.status).toBe(401);
             expect(res.body.message).toBe("User does not exist");
         });
@@ -50,8 +61,8 @@ describe("Test account router", () => {
     });
 describe("POST /api/account/register", () => {
     test("Should return 201 when successfully register", async () => {
-      (UserHandler.checkUser as jest.Mock).mockResolvedValue(null);
-      (UserHandler.insertUser as jest.Mock).mockResolvedValue("new_user_id");
+      (UserHandler.getUserByUsername as jest.Mock).mockResolvedValue(null);
+      (UserHandler.insert as jest.Mock).mockResolvedValue(10);
 
       const res = await request(app)
         .post("/api/account/register")
@@ -62,7 +73,7 @@ describe("POST /api/account/register", () => {
     });
 
     test("Should return 401 when user already exists", async () => {
-      (UserHandler.checkUser as jest.Mock).mockResolvedValue("existing_id");
+      (UserHandler.getUserByUsername as jest.Mock).mockResolvedValue("existing_id");
 
       const res = await request(app)
         .post("/api/account/register")
@@ -82,8 +93,8 @@ describe("POST /api/account/register", () => {
     });
 
     test("Should return 500 when insertUser fails", async () => {
-      (UserHandler.checkUser as jest.Mock).mockResolvedValue(null);
-      (UserHandler.insertUser as jest.Mock).mockResolvedValue(null);
+      (UserHandler.getUserByUsername as jest.Mock).mockResolvedValue(null);
+      (UserHandler.insert as jest.Mock).mockResolvedValue(null);
 
       const res = await request(app)
         .post("/api/account/register")

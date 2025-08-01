@@ -50,6 +50,7 @@ export interface PlaylistEntry {
 export interface userRecord {
   id?: number;
   username: string;
+  user_id: string;
   password: string;
   permission: number;
 }

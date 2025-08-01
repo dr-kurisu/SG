@@ -1,8 +1,7 @@
 import sqlite3 from "sqlite3";
 import { open, Database } from 'sqlite';
-import { FileRecord } from "./types";
+import { FileRecord, userRecord } from "./types";
 import path from "path";
-import fs from 'fs/promises';
 import bcrypt from "bcryptjs";
 
 let db: Database | null = null;
@@ -52,12 +51,9 @@ export const initDB = async (): Promise<Database> => {
         // Insert admin
         const passwordHash = await bcrypt.hash("admin", 10);
         await newDB.run(`
-            INSERT INTO users (user_id, username, password, permission)
-            SELECT ?, ?, ?, ?
-            WHERE NOT EXISTS (
-                SELECT 1 FROM users WHERE user_id = ?
-            )`,
-            ["admin", "admin", passwordHash, 999, "admin"]
+            INSERT OR IGNORE INTO users (user_id, username, password, permission)
+            VALUES (?, ?, ?, ?)`,
+            ["admin","admin", passwordHash, 999]
         );
 
 
@@ -100,7 +96,6 @@ export const FileHandler = {
                     throw new Error(`数据重复: ${error.message}`);
                 }
             }
-            
             console.error('插入文件失败:', error);
             throw new Error(`文件插入失败: ${error instanceof Error ? error.message : String(error)}`);
         }
@@ -135,7 +130,7 @@ export const FileHandler = {
         );
         //1.更改的permission不能大于current permission
         
-        //2.更改的permission不能为负数
+        //2.更改的permission不能最小是0
         return true;
     },
 
@@ -201,8 +196,124 @@ export const FileHandler = {
 };
 
 export const UserHandler = {
-    // Todo
-}
+  // 插入用户record
+  insert: async (user_id: string, username: string, password: string, permission: number) => {
+    const db = await initDB();
+    try {
+      const result = await db.run(
+        `INSERT INTO users (user_id, username, password, permission)
+         VALUES (?, ?, ?, ?)`,
+        [user_id, username, password, permission]
+      );
+      if (!result.lastID) {
+        throw new Error('Insert failed. No lastID returned');
+      }
+      return result.lastID;
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes('SQLITE_CONSTRAINT: FOREIGN KEY')) {
+          throw new Error(`数据库外键约束错误: ${error.message}`);
+        }
+        if (error.message.includes('SQLITE_CONSTRAINT: UNIQUE')) {
+          throw new Error(`数据重复: ${error.message}`);
+        }
+      }
+      console.error('插入用户失败:', error);
+      throw new Error(`插入失败: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  },
+
+  // 移除用户record by username
+  removeUserByUserID: async (user_id: string) => {
+    const db = await initDB();
+    const result = await db.run(`DELETE FROM users WHERE user_id = ?`, [user_id]);
+    return result.changes! > 0;
+  },
+
+  // 更新用户权限
+  updateUserPermission: async (user_id: string, permission: number) => {
+    const db = await initDB();
+    const result = await db.run(
+      `UPDATE users SET permission = ? WHERE user_id = ?`,
+      [permission, user_id]
+    );
+    return result.changes! > 0;
+  },
+
+  // 更新用户密码
+  updateUserPassword: async (user_id: string, newPassword: string) => {
+    const db = await initDB();
+    const result = await db.run(
+      `UPDATE users SET password = ? WHERE user_id = ?`,
+      [newPassword, user_id]
+    );
+    return result.changes! > 0;
+  },
+
+  // 更新用户名
+  updateUsername: async (user_id: string, newUsername: string) => {
+    const db = await initDB();
+    try {
+      const result = await db.run(
+        `UPDATE users SET username = ? WHERE user_id = ?`,
+        [newUsername, user_id]
+      );
+      return result.changes! > 0;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('SQLITE_CONSTRAINT: UNIQUE')) {
+        throw new Error(`用户名已存在: ${error.message}`);
+      }
+      throw error;
+    }
+  },
+
+  // 更新用户ID
+  updateUserID: async (oldUserID: string, newUserID: string) => {
+    const db = await initDB();
+    try {
+      const result = await db.run(
+        `UPDATE users SET user_id = ? WHERE user_id = ?`,
+        [newUserID, oldUserID]
+      );
+      return result.changes! > 0;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('SQLITE_CONSTRAINT: UNIQUE')) {
+        throw new Error(`user_id 已存在: ${error.message}`);
+      }
+      throw error;
+    }
+  },
+
+  // 获取用户 by user_id
+  getUserByUserID: async (user_id: string) => {
+    const db = await initDB();
+    const user = await db.get<userRecord>(
+      `SELECT * FROM users WHERE user_id = ?;`,
+      [user_id]
+    );
+    return user || null;
+  },
+
+  getUserByUsername: async (username: string) => {
+    const db = await initDB();
+    const user = await db.get<userRecord>(
+      `SELECT * FROM users WHERE username = ?;`,
+      [username]
+    );
+    return user || null;
+  },
+
+  // 验证用户密码
+  verifyUser: async (username: string, password: string) => {
+    const db = await initDB();
+    const user = await db.get(
+        `SELECT * FROM users WHERE username = ?`,
+        [username]
+    );
+    if (!user) return null;
+    return await bcrypt.compare(password, user.password);
+    }
+};
 
 export const MusicHandler = {
     // Todo
