@@ -9,7 +9,7 @@ export const clearDatabase = () => {
     fs.unlinkSync(dbPath);
     console.log(`Database was deleted`);
   } catch (err) {
-    console.error(`Fail to delete database`, err);
+    console.error(`Fail to delete database`);
   }
 }
 

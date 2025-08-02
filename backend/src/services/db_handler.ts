@@ -1,6 +1,6 @@
 import sqlite3 from "sqlite3";
 import { open, Database } from 'sqlite';
-import { FileRecord, userRecord } from "./types";
+import { FileRecord, Playlist, SongRecord, UserRecord } from "./types";
 import path from "path";
 import bcrypt from "bcryptjs";
 
@@ -53,14 +53,51 @@ export const initDB = async (): Promise<Database> => {
         await newDB.run(`
             INSERT OR IGNORE INTO users (user_id, username, password, permission)
             VALUES (?, ?, ?, ?)`,
-            ["admin","admin", passwordHash, 999]
+            ["admin", "admin", passwordHash, 999]
         );
 
+        // Song table
+        await newDB.run(`
+            CREATE TABLE IF NOT EXISTS songs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                file_id INTEGER NOT NULL UNIQUE,
+                title TEXT NOT NULL,
+                artist TEXT,
+                cover TEXT,
+                duration INTEGER NOT NULL,             -- second
+                FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE
+            );`
+        );
 
+        // Playlist table
+        await newDB.run(`
+            CREATE TABLE IF NOT EXISTS playlists (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                description TEXT,
+                cover TEXT
+            );`
+        );
+
+        // Playlist entries table
+        await newDB.run(`
+            CREATE TABLE IF NOT EXISTS playlistEntries (
+                playlist_id INTEGER NOT NULL,
+                song_id INTEGER NOT NULL,
+                PRIMARY KEY (playlist_id, song_id),
+                FOREIGN KEY (playlist_id) REFERENCES playlists(id) ON DELETE CASCADE,
+                FOREIGN KEY (song_id) REFERENCES songs(id) ON DELETE CASCADE
+            );
+        `);
+
+        // assign gloabl db
         db = newDB;
         return db;
     })();
+
     if (!dbPromise) throw Error("Invalid db promise");
+
     return await dbPromise;
 };
 
@@ -86,18 +123,8 @@ export const FileHandler = {
                 throw new Error('Insert failed. No lastID return');
             }
             return result.lastID;
-        }catch (error) {
-            // classify errors
-            if (error instanceof Error) {
-                if (error.message.includes('SQLITE_CONSTRAINT: FOREIGN KEY')) {
-                    throw new Error(`数据库外键约束错误: ${error.message}`);
-                }
-                if (error.message.includes('SQLITE_CONSTRAINT: UNIQUE')) {
-                    throw new Error(`数据重复: ${error.message}`);
-                }
-            }
-            console.error('插入文件失败:', error);
-            throw new Error(`文件插入失败: ${error instanceof Error ? error.message : String(error)}`);
+        } catch (err) {
+            handleInsertionSQLError(err);
         }
     },
 
@@ -120,8 +147,8 @@ export const FileHandler = {
         return file;
     },
     //更新权限byId
-    updatePermissionById: async(id: number, user_id:string, permission: number): Promise<Boolean> =>{
-        db =await initDB();
+    updatePermissionById: async (id: number, user_id: string, permission: number): Promise<Boolean> => {
+        db = await initDB();
         await db.run(`
             UPDATE files SET permission = ?
             WHERE user_id = ? AND
@@ -129,12 +156,12 @@ export const FileHandler = {
             [permission, user_id, id]
         );
         //1.更改的permission不能大于current permission
-        
+
         //2.更改的permission不能最小是0
         return true;
     },
 
-    
+
     // Given path return files in query path
     getFilesByPath: async (user_id: string, queryPath: string): Promise<FileRecord[]> => {
         db = await initDB();
@@ -178,11 +205,11 @@ export const FileHandler = {
         await db.run(`
             UPDATE files 
             SET is_deleted = 1 
-            WHERE filepath LIKE ? AND user_id = ?`, 
+            WHERE filepath LIKE ? AND user_id = ?`,
             [`${startPath}%`, user_id]
         );
     },
-    
+
     // 更新是否为加密文件夹
     updateRequirePassword: async (id: number, newValue: boolean) => {
         db = await initDB();
@@ -196,133 +223,258 @@ export const FileHandler = {
 };
 
 export const UserHandler = {
-  // 插入用户record
-  insert: async (user_id: string, username: string, password: string, permission: number) => {
-    const db = await initDB();
-    try {
-      const result = await db.run(
-        `INSERT INTO users (user_id, username, password, permission)
-         VALUES (?, ?, ?, ?)`,
-        [user_id, username, password, permission]
-      );
-      if (!result.lastID) {
-        throw new Error('Insert failed. No lastID returned');
-      }
-      return result.lastID;
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.message.includes('SQLITE_CONSTRAINT: FOREIGN KEY')) {
-          throw new Error(`数据库外键约束错误: ${error.message}`);
+    // 插入用户record
+    insert: async (user_id: string, username: string, password: string, permission: number) => {
+        const db = await initDB();
+        try {
+            const result = await db.run(
+                `INSERT INTO users (user_id, username, password, permission)
+            VALUES (?, ?, ?, ?)`,
+                [user_id, username, password, permission]
+            );
+            if (!result.lastID) {
+                throw new Error('Insert failed. No lastID returned');
+            }
+            return result.lastID;
+        } catch (err) {
+            handleInsertionSQLError(err);
         }
-        if (error.message.includes('SQLITE_CONSTRAINT: UNIQUE')) {
-          throw new Error(`数据重复: ${error.message}`);
+    },
+
+    // 移除用户record by username
+    removeUserByUserID: async (user_id: string) => {
+        const db = await initDB();
+        const result = await db.run(`DELETE FROM users WHERE user_id = ?`, [user_id]);
+        return result.changes! > 0;
+    },
+
+    // 更新用户权限
+    updateUserPermission: async (user_id: string, permission: number) => {
+        const db = await initDB();
+        const result = await db.run(
+            `UPDATE users SET permission = ? WHERE user_id = ?`,
+            [permission, user_id]
+        );
+        return result.changes! > 0;
+    },
+
+    // 更新用户密码
+    updateUserPassword: async (user_id: string, newPassword: string) => {
+        const db = await initDB();
+        const result = await db.run(
+            `UPDATE users SET password = ? WHERE user_id = ?`,
+            [newPassword, user_id]
+        );
+        return result.changes! > 0;
+    },
+
+    // 更新用户名
+    updateUsername: async (user_id: string, newUsername: string) => {
+        const db = await initDB();
+        try {
+            const result = await db.run(
+                `UPDATE users SET username = ? WHERE user_id = ?`,
+                [newUsername, user_id]
+            );
+            return result.changes! > 0;
+        } catch (error) {
+            if (error instanceof Error && error.message.includes('SQLITE_CONSTRAINT: UNIQUE')) {
+                throw new Error(`用户名已存在: ${error.message}`);
+            }
+            throw error;
         }
-      }
-      console.error('插入用户失败:', error);
-      throw new Error(`插入失败: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  },
+    },
 
-  // 移除用户record by username
-  removeUserByUserID: async (user_id: string) => {
-    const db = await initDB();
-    const result = await db.run(`DELETE FROM users WHERE user_id = ?`, [user_id]);
-    return result.changes! > 0;
-  },
+    // 更新用户ID
+    updateUserID: async (oldUserID: string, newUserID: string) => {
+        const db = await initDB();
+        try {
+            const result = await db.run(
+                `UPDATE users SET user_id = ? WHERE user_id = ?`,
+                [newUserID, oldUserID]
+            );
+            return result.changes! > 0;
+        } catch (error) {
+            if (error instanceof Error && error.message.includes('SQLITE_CONSTRAINT: UNIQUE')) {
+                throw new Error(`user_id 已存在: ${error.message}`);
+            }
+            throw error;
+        }
+    },
 
-  // 更新用户权限
-  updateUserPermission: async (user_id: string, permission: number) => {
-    const db = await initDB();
-    const result = await db.run(
-      `UPDATE users SET permission = ? WHERE user_id = ?`,
-      [permission, user_id]
-    );
-    return result.changes! > 0;
-  },
+    // 获取用户 by user_id
+    getUserByUserID: async (user_id: string) => {
+        const db = await initDB();
+        const user = await db.get<UserRecord>(
+            `SELECT * FROM users WHERE user_id = ?;`,
+            [user_id]
+        );
+        return user || null;
+    },
 
-  // 更新用户密码
-  updateUserPassword: async (user_id: string, newPassword: string) => {
-    const db = await initDB();
-    const result = await db.run(
-      `UPDATE users SET password = ? WHERE user_id = ?`,
-      [newPassword, user_id]
-    );
-    return result.changes! > 0;
-  },
+    getUserByUsername: async (username: string) => {
+        const db = await initDB();
+        const user = await db.get<UserRecord>(
+            `SELECT * FROM users WHERE username = ?;`,
+            [username]
+        );
+        return user || null;
+    },
 
-  // 更新用户名
-  updateUsername: async (user_id: string, newUsername: string) => {
-    const db = await initDB();
-    try {
-      const result = await db.run(
-        `UPDATE users SET username = ? WHERE user_id = ?`,
-        [newUsername, user_id]
-      );
-      return result.changes! > 0;
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('SQLITE_CONSTRAINT: UNIQUE')) {
-        throw new Error(`用户名已存在: ${error.message}`);
-      }
-      throw error;
-    }
-  },
-
-  // 更新用户ID
-  updateUserID: async (oldUserID: string, newUserID: string) => {
-    const db = await initDB();
-    try {
-      const result = await db.run(
-        `UPDATE users SET user_id = ? WHERE user_id = ?`,
-        [newUserID, oldUserID]
-      );
-      return result.changes! > 0;
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('SQLITE_CONSTRAINT: UNIQUE')) {
-        throw new Error(`user_id 已存在: ${error.message}`);
-      }
-      throw error;
-    }
-  },
-
-  // 获取用户 by user_id
-  getUserByUserID: async (user_id: string) => {
-    const db = await initDB();
-    const user = await db.get<userRecord>(
-      `SELECT * FROM users WHERE user_id = ?;`,
-      [user_id]
-    );
-    return user || null;
-  },
-
-  getUserByUsername: async (username: string) => {
-    const db = await initDB();
-    const user = await db.get<userRecord>(
-      `SELECT * FROM users WHERE username = ?;`,
-      [username]
-    );
-    return user || null;
-  },
-
-  // 验证用户密码
-  verifyUser: async (username: string, password: string) => {
-    const db = await initDB();
-    const user = await db.get(
-        `SELECT * FROM users WHERE username = ?`,
-        [username]
-    );
-    if (!user) return null;
-    return await bcrypt.compare(password, user.password);
+    // 验证用户密码
+    verifyUser: async (username: string, password: string) => {
+        const db = await initDB();
+        const user = await db.get(
+            `SELECT * FROM users WHERE username = ?`,
+            [username]
+        );
+        if (!user) return null;
+        return await bcrypt.compare(password, user.password);
     }
 };
 
-export const MusicHandler = {
-    // Todo
+export const SongHandler = {
+    // Insert song
+    insert: async(song: SongRecord) => {
+        db = await initDB();
+        try {
+            const result = await db.run(
+                `INSERT INTO songs (file_id, title, artist, cover, duration)
+                 VALUES (?, ?, ?, ?, ?)`,
+                [song.file_id, song.title, song.artist ?? null, song.cover ?? null, song.duration]
+            );
+            if (!result.lastID) {
+                throw new Error('Insert failed. No lastID return');
+            }
+            return result.lastID;
+        } catch (err) {
+            handleInsertionSQLError(err);
+        }
+    },
+
+    // Get songRecord by song_id
+    getSongByID: async(song_id: number) => {
+        db = await initDB();
+        const song = await db.get<SongRecord>(`
+            SELECT * FROM songs WHERE id = ?;`,
+            [song_id]
+        );
+        return song || null;
+    },
+
+    // Get song by file_id
+    getSongByFileID: async (file_id: string) => {
+        db = await initDB();
+        const song = await db.get<SongRecord>(
+            `SELECT * FROM songs WHERE file_id = ?;`,
+            [file_id]
+        );
+        return song || null;
+    },
+
+    // Remove songRecord by song_id
+    removeSongByID: async (song_id: string) => {
+        db = await initDB();
+        const result = await db.run(`DELETE FROM songs WHERE id = ?;`, [song_id]);
+        return result.changes! > 0;
+    },
 }
 
 export const PlayListHandler = {
-    // Todo
+    // Create playlist
+    createPlaylist: async(playlist: Playlist) => {
+        db = await initDB();
+        const result = await db.run(`
+            INSERT INTO playlists (name, user_id, description, cover)
+            VALUES (?, ?, ?, ?);`,
+            [playlist.name, playlist.user_id, playlist.description??null, playlist.cover??null]
+        );
+        if (!result.lastID) throw new Error(`Fail to create playlist ${playlist.name}`);
+        return result.changes! > 0;
+    },
+    
+    // Get playlist by user_id
+    getPlaylistsByUser: async (user_id: string) => {
+        db = await initDB();
+        const playlists = await db.all(
+            `SELECT * FROM playlists WHERE user_id = ? ORDER BY created_at DESC`,
+            [user_id]
+        );
+        return playlists;
+    },
+
+    // Remove playlist by playlist_id
+    removePlaylist: async (playlist_id: number) => {
+        db = await initDB();
+        const result = await db.run(
+            `DELETE FROM playlists WHERE id = ?`,
+            [playlist_id]
+        );
+        return result.changes! > 0;
+    },
+
+    // Add song to a playlist
+    addSongToPlaylist: async (playlist_id: number, song_id: number) => {
+        db = await initDB();
+        try {
+            await db.run(
+                `INSERT INTO playlistEntries (playlist_id, song_id) VALUES (?, ?)`,
+                [playlist_id, song_id]
+            );
+            return true;
+        } catch (err) {
+            if (err instanceof Error && err.message.includes("UNIQUE constraint failed")) {
+                throw new Error("Song is already in the playlist");
+            }
+            throw err;
+        }
+    },
+
+    // Remove song from playlist
+    removeSongFromPlaylist: async (playlist_id: number, song_id: number) => {
+        db = await initDB();
+        const result = await db.run(
+            `DELETE FROM playlistEntries WHERE playlist_id = ? AND song_id = ?`,
+            [playlist_id, song_id]
+        );
+        return result.changes! > 0;
+    },
+
+    // Get songs by playlist_id
+    getSongsByPlaylistID: async (playlist_id: number) => {
+        db = await initDB();
+        const songs = await db.all<SongRecord[]>(
+            `SELECT s.*
+             FROM songs s
+             JOIN playlistEntries pe ON s.id = pe.song_id
+             WHERE pe.playlist_id = ?`,
+            [playlist_id]
+        );
+        return songs;
+    },
+
+    // 判断歌曲是否在playlist里
+    isSongInPlaylist: async (playlist_id: number, song_id: number) => {
+        db = await initDB();
+        const result = await db.get(
+            `SELECT 1 FROM playlistEntries WHERE playlist_id = ? AND song_id = ?`,
+            [playlist_id, song_id]
+        );
+        return !!result;
+    }
 }
 
-export const PlayListEntriesHandler = {
-    // Todo
+
+function handleInsertionSQLError(error: unknown): never {
+    if (error instanceof Error) {
+        if (error.message.includes('SQLITE_CONSTRAINT: FOREIGN KEY')) {
+            throw new Error(`数据库外键约束错误: ${error.message}`);
+        }
+        if (error.message.includes('SQLITE_CONSTRAINT: UNIQUE')) {
+            throw new Error(`数据不唯一: ${error.message}`);
+        }
+        
+    }
+    console.error('插入失败:', error);
+    throw new Error(`插入失败: ${error instanceof Error ? error.message : String(error)}`);
 }

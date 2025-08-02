@@ -121,5 +121,4 @@ export const mockPlaylists: Playlist[] = [
   }
 ]
 
-// 为了兼容现有代码，保留原来的mockPlaylist
 export const mockPlaylist: Song[] = mockSongs.slice(0, 3)
