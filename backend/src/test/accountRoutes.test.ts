@@ -11,7 +11,7 @@ jest.mock("../services/db_handler", () => ({
     },
 }));
 
-const testUserRecord: userRecord = {
+const testUserRecord: UserRecord = {
   user_id: uuidv4(),
   username: "testRoute",
   password: "123456",
@@ -19,9 +19,8 @@ const testUserRecord: userRecord = {
 }
 
 
-import { UserHandler, disconnectDB } from "../services/db_handler";
-import { userRecord } from "../services/types";
-import { clearDatabase,  } from "../services/utili";
+import { UserHandler } from "../services/db_handler";
+import { UserRecord } from "../services/types";
 
 const app = express();
 app.use(express.json());
@@ -30,7 +29,7 @@ app.use("/api/account", accountRouter);
 
 describe("Test account router", () => {
     describe("POST /api/account/login", () => {
-        test("Should return token when successfully login", async () => {
+        test("should return token when successfully login", async () => {
             (UserHandler.getUserByUsername as jest.Mock).mockResolvedValue(testUserRecord);
             (UserHandler.verifyUser as jest.Mock).mockResolvedValue(true);
 
@@ -42,7 +41,7 @@ describe("Test account router", () => {
             expect(res.body.user).toEqual({ user_id: testUserRecord.user_id, username: testUserRecord.username});
         });
 
-        test("Should return 401 when user ont exist", async () => {
+        test("should return 401 when user ont exist", async () => {
             (UserHandler.getUserByUsername as jest.Mock).mockResolvedValue(null);
             const res = await request(app)
                 .post("/api/account/login")
@@ -51,7 +50,7 @@ describe("Test account router", () => {
             expect(res.body.message).toBe("User does not exist");
         });
 
-        test("Should return 400 when missing required field", async () => {
+        test("should return 400 when missing required field", async () => {
             const res = await request(app)
                 .post("/api/account/login")
                 .send({});
@@ -60,7 +59,7 @@ describe("Test account router", () => {
         });
     });
 describe("POST /api/account/register", () => {
-    test("Should return 201 when successfully register", async () => {
+    test("should return 201 when successfully register", async () => {
       (UserHandler.getUserByUsername as jest.Mock).mockResolvedValue(null);
       (UserHandler.insert as jest.Mock).mockResolvedValue(10);
 
@@ -72,7 +71,7 @@ describe("POST /api/account/register", () => {
       expect(res.body.message).toBe("Successfully registered user");
     });
 
-    test("Should return 401 when user already exists", async () => {
+    test("should return 401 when user already exists", async () => {
       (UserHandler.getUserByUsername as jest.Mock).mockResolvedValue("existing_id");
 
       const res = await request(app)
@@ -83,7 +82,7 @@ describe("POST /api/account/register", () => {
       expect(res.body.message).toBe("User already exist");
     });
 
-    test("Should return 400 when missing username or password", async () => {
+    test("should return 400 when missing username or password", async () => {
       const res = await request(app)
         .post("/api/account/register")
         .send({ username: "onlyusername" });
@@ -92,7 +91,7 @@ describe("POST /api/account/register", () => {
       expect(res.body.message).toBe("Username and password are required");
     });
 
-    test("Should return 500 when insertUser fails", async () => {
+    test("should return 500 when insertUser fails", async () => {
       (UserHandler.getUserByUsername as jest.Mock).mockResolvedValue(null);
       (UserHandler.insert as jest.Mock).mockResolvedValue(null);
 

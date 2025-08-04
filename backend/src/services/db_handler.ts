@@ -73,6 +73,7 @@ export const initDB = async (): Promise<Database> => {
         await newDB.run(`
             CREATE TABLE IF NOT EXISTS playlists (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
                 name TEXT NOT NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 description TEXT,
@@ -356,24 +357,25 @@ export const SongHandler = {
     getSongByID: async(song_id: number) => {
         db = await initDB();
         const song = await db.get<SongRecord>(`
-            SELECT * FROM songs WHERE id = ?;`,
+            SELECT * FROM songs s JOIN files f ON s.file_id = f.id WHERE s.id = ?;`,
             [song_id]
         );
         return song || null;
     },
 
     // Get song by file_id
-    getSongByFileID: async (file_id: string) => {
+    getSongByFileID: async (file_id: number) => {
         db = await initDB();
         const song = await db.get<SongRecord>(
-            `SELECT * FROM songs WHERE file_id = ?;`,
+            `SELECT * FROM songs s JOIN files f ON s.file_id = f.id WHERE s.file_id = ?;`,
             [file_id]
         );
         return song || null;
     },
 
     // Remove songRecord by song_id
-    removeSongByID: async (song_id: string) => {
+    // 是否要级联删除？？？
+    removeSongByID: async (song_id: number) => {
         db = await initDB();
         const result = await db.run(`DELETE FROM songs WHERE id = ?;`, [song_id]);
         return result.changes! > 0;
@@ -390,13 +392,13 @@ export const PlayListHandler = {
             [playlist.name, playlist.user_id, playlist.description??null, playlist.cover??null]
         );
         if (!result.lastID) throw new Error(`Fail to create playlist ${playlist.name}`);
-        return result.changes! > 0;
+        return result.lastID!;
     },
     
     // Get playlist by user_id
-    getPlaylistsByUser: async (user_id: string) => {
+    getPlaylistsByUserID: async (user_id: string) => {
         db = await initDB();
-        const playlists = await db.all(
+        const playlists = await db.all<Playlist[]>(
             `SELECT * FROM playlists WHERE user_id = ? ORDER BY created_at DESC`,
             [user_id]
         );
@@ -404,7 +406,7 @@ export const PlayListHandler = {
     },
 
     // Remove playlist by playlist_id
-    removePlaylist: async (playlist_id: number) => {
+    removePlaylistByID: async (playlist_id: number) => {
         db = await initDB();
         const result = await db.run(
             `DELETE FROM playlists WHERE id = ?`,

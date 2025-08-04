@@ -42,6 +42,6 @@ export interface Playlist {
     user_id: string,
     description: string | null,
     cover: string | null,
-    created_at: string
+    created_at?: string,
 }
 
