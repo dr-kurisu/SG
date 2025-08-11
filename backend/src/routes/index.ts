@@ -8,6 +8,7 @@ import { clearDirectory, clearDatabase } from '../services/utili';
 // import { scanDirectory } from '../services/utili';
 import accountRouter from './accountRoutes';
 import authenticateToken from '../middlerware/authToken';
+import { songRouter } from './songRoutes';
 // import diaryRouter from './diary';
 
 
@@ -35,8 +36,8 @@ const initializeDevEnvironment = async () => {
   app.use(authenticateToken);
 
   app.use('/api', storageRouter);
-  app.use('/api/preview', previewRouter);
-  app.use('/music', express.static(path.posix.join(__dirname, '../uploads/Music')));
+ // app.use('/api/preview', previewRouter);
+  app.use('/api/songs', songRouter);
 
   app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);

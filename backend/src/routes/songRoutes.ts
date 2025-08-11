@@ -69,7 +69,7 @@ songRouter.delete('/:song_id', async(req, res) => {
 songRouter.get('/stream/:song_id', async(req, res) => {
     const song_id = req.params.song_id;
     if (!song_id || isNaN(Number(song_id))) {
-        res.status(400).json({ error: "Invalid song_id" });
+        res.status(400).json({ error: "song_id is required" });
         return;
     }
 
@@ -82,6 +82,7 @@ songRouter.get('/stream/:song_id', async(req, res) => {
         }
         // 检查文件是否存在
         const fullPath = path.posix.join(getUploadDir(), user_id, song.filepath, song.filename);
+        console.log(fullPath);
         if (!fs.existsSync(fullPath)) {
             res.status(404).json({ error: "File not found" });
             return;

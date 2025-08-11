@@ -1,12 +1,18 @@
 import request from 'supertest';
 import express from 'express';
 import { songRouter } from '../routes/songRoutes';
-import { SongHandler } from '../services/db_handler';
+import { disconnectDB, SongHandler } from '../services/db_handler';
 import { SongRecord } from '../services/types';
+import fs from "fs";
+import { getUploadDir } from '../services/storage';
+import path from 'path';
+import authenticateToken from '../middlerware/authToken';
+import { clearDatabase, muteConsole } from '../services/utili';
 
 
 const app = express();
 app.use(express.json());
+app.use(authenticateToken);
 app.use('/songs', songRouter);
 
 
@@ -91,5 +97,116 @@ describe('DELETE /songs/:song_id', () => {
         expect(res.status).toBe(500);
         expect(res.body.error).toMatch(/internal/i);   
         errorSpy.mockRestore();
-    })
+    });
 })
+
+
+describe("POST /songs/record", () => {
+    const songRecord = {
+        file_id: 1,
+        title: 'Test Song',
+        duration: 120,
+        user_id: 'user123',
+        filename: 'test.mp3',
+        filepath: '/music/test.mp3',
+        size: 123456,
+        type: 'audio/mpeg'
+    };
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    test("should insert song record if everything is right", async() => {
+        jest.spyOn(SongHandler, "insert").mockResolvedValue(1);
+        const res = await request(app)
+            .post('/songs/record')
+            .send(songRecord);
+
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual({ success: true });
+        expect(SongHandler.insert).toHaveBeenCalledWith(songRecord);
+    });
+
+    test("should return 500 if had internal error", async() => {
+        jest.spyOn(SongHandler, "insert").mockImplementation(() => {
+            throw new Error("Internal Error");
+        })
+        const res = await request(app)
+        .post('/songs/record')
+        .send(songRecord);
+        expect(res.status).toBe(500);
+        expect(res.body.err).toContain('Fail to insert song');
+    });
+
+    test("should return 400 if missing required fields", async() => {
+        const res = await request(app)
+            .post('/songs/record')
+            .send();
+
+        expect(res.status).toBe(400);
+        expect(res.body).toEqual({ err: 'song record is required' });
+    });
+});
+
+describe("GET /songs/stream/song_id", () => {
+    const tempDir = path.posix.join(getUploadDir(), "test_user", "temp");
+    const tempFile = path.posix.join(tempDir, "TEST_MUSIC.mp3");
+
+    beforeAll(() => {
+        fs.mkdirSync(tempDir, { recursive: true });
+    });
+
+    beforeEach(() => {
+        fs.writeFileSync(tempFile, "FAKE_MP3_DATA_123456789");
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+        if (fs.existsSync(tempFile)) {
+            fs.unlinkSync(tempFile);
+        }
+    });
+
+    test("should return 400 when missing or invalid song_id", async() => {
+        const res = await request(app)
+        .get("/songs/stream/notANumber");
+        expect(res.status).toBe(400);
+        expect(res.body.error).toMatch(/song_id is required/i);
+    });
+
+    test("should return 200 if success", async() => {
+        jest.spyOn(SongHandler, "getSongByID").mockResolvedValue({
+            user_id: "test_user",
+            filename: "TEST_MUSIC.mp3",
+            filepath: "/temp/",
+            size: fs.statSync(tempFile).size,
+            type: 'audio/mpeg',
+            file_id: 1,
+            title: "TEST MUSIC",
+            duration: 120
+        });
+        // 增加parse方便测试内容
+        const res = await request(app)
+        .get("/songs/stream/1")
+        .buffer()
+        .parse((res, cb) => {
+            const chunks: Buffer[] = [];
+            res.on("data", (chunk) => chunks.push(chunk));
+            res.on("end", () => cb(null, Buffer.concat(chunks)));
+        });
+        expect(res.status).toBe(200);
+        expect(res.headers["content-type"]).toBe("audio/mpeg");
+        expect(Number(res.headers["content-length"])).toBe(fs.statSync(tempFile).size);
+        expect(res.body.toString()).toContain("FAKE_MP3_DATA_123456789");
+    });
+});
+
+
+// 避免影响其他的测试
+afterAll(async () => {
+    const restoreConsole = muteConsole(['log', 'error']);
+    await disconnectDB();
+    await clearDatabase();
+    restoreConsole();
+});

@@ -398,11 +398,20 @@ export const PlayListHandler = {
     // Get playlist by user_id
     getPlaylistsByUserID: async (user_id: string) => {
         db = await initDB();
-        const playlists = await db.all<Playlist[]>(
-            `SELECT * FROM playlists WHERE user_id = ? ORDER BY created_at DESC`,
+        const playlists = await db.all<Playlist[]>(`
+            SELECT * FROM playlists WHERE user_id = ? ORDER BY created_at DESC`,
             [user_id]
         );
         return playlists;
+    },
+
+    getPlaylistByID: async(playlist_id: number) => {
+        db = await initDB();
+        const result = await db.get<Playlist>(`
+            SELECT * FROM playlists WHERE id =  ?;`,
+            [playlist_id]
+        );
+        return result ?? null;
     },
 
     // Remove playlist by playlist_id

@@ -2,23 +2,9 @@ import { disconnectDB, FileHandler, initDB, PlayListHandler, SongHandler, UserHa
 import { Database } from 'sqlite';
 import { clearDatabase, muteConsole } from '../services/utili';
 import bcrypt from "bcryptjs";
-import { FileRecord, Playlist, SongRecord } from '../services/types';
+import { SongRecord } from '../services/types';
+import { exampleFileRecord, examplePlaylistRecord } from './exampleRecord';
 
-
-const exampleFileRecord: FileRecord = {
-    user_id: "example_user",
-    filename: "example_filename",
-    filepath: "/",
-    size: 1024,
-    type: 'audio/mpeg'
-};
-
-const examplePlaylistRecord: Playlist = {
-    name: 'example_playlist',
-    user_id: 'example_user',
-    description: 'No FK Description',
-    cover: 'example_cover_path',
-};
 
 
 describe('Database Integration Tests', () => {
