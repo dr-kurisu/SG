@@ -9,6 +9,7 @@ import { clearDirectory, clearDatabase } from '../services/utili';
 import accountRouter from './accountRoutes';
 import authenticateToken from '../middlerware/authToken';
 import { songRouter } from './songRoutes';
+import { playlistRouter } from './playlistRoutes';
 // import diaryRouter from './diary';
 
 
@@ -38,6 +39,7 @@ const initializeDevEnvironment = async () => {
   app.use('/api', storageRouter);
  // app.use('/api/preview', previewRouter);
   app.use('/api/songs', songRouter);
+  app.use('/api/playlist', playlistRouter);
 
   app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);

@@ -1,8 +1,9 @@
 export interface Song {
-  id: string
+  id: number
+  file_id: number
+  url?: string
   title: string
   artist: string
-  url: string
   cover: string
   duration: number  // 单位：秒
 }
@@ -23,4 +24,11 @@ export interface PlayerState {
   volume: number
   progress: number
   duration: number
+}
+
+export interface FileItem {
+  id: number;
+  name: string;
+  type: string;
+  modifiedTime: string;
 }

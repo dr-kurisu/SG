@@ -2,13 +2,7 @@ import { ref } from 'vue';
 import { instance as axiosInstance } from '@/api/axios';
 import axios from "axios";
 import Swal from 'sweetalert2'
-
-export interface FileItem {
-  id: number;
-  name: string;
-  type: string;
-  modifiedTime: string;
-}
+import type { FileItem } from '@/types/types';
 
 export const files = ref<FileItem[]>([]);
 export const folderName = ref(''); // Folder name

@@ -2,7 +2,8 @@ import type { Song, Playlist } from "@/types/types"
 
 export const mockSongs: Song[] = [
   {
-    id: '1',
+    id: 1,
+    file_id: 1,
     title: '春天里',
     artist: '汪峰',
     url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
@@ -10,7 +11,8 @@ export const mockSongs: Song[] = [
     duration: 180,
   },
   {
-    id: '2',
+    id: 2,
+    file_id: 2,
     title: '夜空中最亮的星',
     artist: '逃跑计划',
     url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
@@ -18,7 +20,8 @@ export const mockSongs: Song[] = [
     duration: 240,
   },
   {
-    id: '3',
+    id: 3,
+    file_id: 3,
     title: '南山南',
     artist: '马頔',
     url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
@@ -26,7 +29,8 @@ export const mockSongs: Song[] = [
     duration: 301,
   },
   {
-    id: '4',
+    id: 4,
+    file_id: 4,
     title: '平凡之路',
     artist: '朴树',
     url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
@@ -34,7 +38,8 @@ export const mockSongs: Song[] = [
     duration: 256,
   },
   {
-    id: '5',
+    id: 5,
+    file_id: 5,
     title: '海阔天空',
     artist: 'Beyond',
     url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',
@@ -42,7 +47,8 @@ export const mockSongs: Song[] = [
     duration: 325,
   },
   {
-    id: '6',
+    id: 6,
+    file_id: 6,
     title: '追光者',
     artist: '岑宁儿',
     url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3',
@@ -50,7 +56,8 @@ export const mockSongs: Song[] = [
     duration: 198,
   },
   {
-    id: '7',
+    id: 7,
+    file_id: 7,
     title: '稻香',
     artist: '周杰伦',
     url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3',
@@ -58,7 +65,8 @@ export const mockSongs: Song[] = [
     duration: 210,
   },
   {
-    id: '8',
+    id: 8,
+    file_id: 8,
     title: '小幸运',
     artist: '田馥甄',
     url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3',
@@ -66,7 +74,8 @@ export const mockSongs: Song[] = [
     duration: 215,
   },
   {
-    id: '9',
+    id: 9,
+    file_id: 9,
     title: '成都',
     artist: '赵雷',
     url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3',
@@ -74,7 +83,8 @@ export const mockSongs: Song[] = [
     duration: 328,
   },
   {
-    id: '10',
+    id: 10,
+    file_id: 10,
     title: '光辉岁月',
     artist: 'Beyond',
     url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3',

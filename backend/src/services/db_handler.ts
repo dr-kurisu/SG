@@ -56,6 +56,7 @@ export const initDB = async (): Promise<Database> => {
             ["admin", "admin", passwordHash, 999]
         );
 
+
         // Song table
         await newDB.run(`
             CREATE TABLE IF NOT EXISTS songs (
@@ -428,15 +429,20 @@ export const PlayListHandler = {
     addSongToPlaylist: async (playlist_id: number, song_id: number) => {
         db = await initDB();
         try {
+            // Check existance of playlist_id
+            const playlist = await db.get(`SELECT 1 FROM playlists WHERE id = ?`, [playlist_id]);
+            if (!playlist) throw new Error('Playlist does not exist');
+            // Check existance of song_id
+            const song = await db.get(`SELECT 1 FROM songs WHERE id = ?`, [song_id]);
+            if (!song) throw new Error('Song does not exist');
+            
             await db.run(
-                `INSERT INTO playlistEntries (playlist_id, song_id) VALUES (?, ?)`,
+                `INSERT OR IGNORE INTO playlistEntries (playlist_id, song_id) VALUES (?, ?)`,
                 [playlist_id, song_id]
             );
             return true;
         } catch (err) {
-            if (err instanceof Error && err.message.includes("UNIQUE constraint failed")) {
-                throw new Error("Song is already in the playlist");
-            }
+            console.error(err);
             throw err;
         }
     },

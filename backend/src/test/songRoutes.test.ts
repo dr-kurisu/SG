@@ -101,7 +101,7 @@ describe('DELETE /songs/:song_id', () => {
 })
 
 
-describe("POST /songs/record", () => {
+describe("POST /songs/add-song", () => {
     const songRecord = {
         file_id: 1,
         title: 'Test Song',
@@ -120,7 +120,7 @@ describe("POST /songs/record", () => {
     test("should insert song record if everything is right", async() => {
         jest.spyOn(SongHandler, "insert").mockResolvedValue(1);
         const res = await request(app)
-            .post('/songs/record')
+            .post('/songs/add-song')
             .send(songRecord);
 
         expect(res.status).toBe(200);
@@ -133,7 +133,7 @@ describe("POST /songs/record", () => {
             throw new Error("Internal Error");
         })
         const res = await request(app)
-        .post('/songs/record')
+        .post('/songs/add-song')
         .send(songRecord);
         expect(res.status).toBe(500);
         expect(res.body.err).toContain('Fail to insert song');
@@ -141,7 +141,7 @@ describe("POST /songs/record", () => {
 
     test("should return 400 if missing required fields", async() => {
         const res = await request(app)
-            .post('/songs/record')
+            .post('/songs/add-song')
             .send();
 
         expect(res.status).toBe(400);

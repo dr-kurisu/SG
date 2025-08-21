@@ -6,11 +6,11 @@ import type { Song, PlayerState } from "@/types/types"
 export const usePlayerStore = defineStore('player', {
     state: (): PlayerState => ({
         currentSong: null,
-        playlist: mockPlaylist || [],
+        playlist: [],
         isPlaying: false,
         volume: 1.0,
         progress: 0,
-        duration: mockPlaylist[0]?.duration || 0
+        duration: 0
     }),
 
     getters: {

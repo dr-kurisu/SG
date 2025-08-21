@@ -8,9 +8,8 @@ import { getUploadDir } from "../services/storage";
 
 export const songRouter = express.Router();
 
-
 // Insert song record POST
-songRouter.post('/record', async(req: Request, res: Response) => {
+songRouter.post('/add-song', async(req: Request, res: Response) => {
     const song: SongRecord = req.body
     if (!song) {
         res.status(400).json({"err": "song record is required"});
