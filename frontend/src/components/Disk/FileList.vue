@@ -38,7 +38,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
 
         <!-- List -->
@@ -59,7 +58,7 @@
                 </span>
 
                 <!-- 复选框，最右 -->
-                <input type="checkbox" :value="item.name" :checked="selectFileItems.has(item)"
+                <input type="checkbox" :value="item.name" :checked="props.selectFileItems.includes(item)"
                     @click.stop="toggleSelection(item)"
                     class="form-checkbox text-blue-600 scale-150 absolute right-4 top-1/2 -translate-y-1/2" />
             </li>
@@ -75,26 +74,26 @@ import { getFileIcon, files, currentPath } from '@/storage/cloudstorage';
 import { useRouter } from 'vue-router';
 
 const props = defineProps<{
-    selectFileItemSet: Set<FileItem>;
+    selectFileItems: FileItem[];
 }>();
 
-const emit = defineEmits(['fetchFilesV2', 'update:selectFileItemSet'])
+const emit = defineEmits(['fetchFilesV2', 'update:selectFileItems']);
 
 const router = useRouter();
 
-const selectFileItems = ref(new Set<FileItem>(props.selectFileItemSet));
-
-
-
 const toggleSelection = (fileItem: FileItem) => {
-    const newSet = new Set(props.selectFileItemSet);
-    if (newSet.has(fileItem)) {
-        newSet.delete(fileItem);
+    const newSelectedFileItems = [...props.selectFileItems];
+
+    const index = newSelectedFileItems.indexOf(fileItem);
+    if (index !== -1) {
+        newSelectedFileItems.splice(index, 1);
     } else {
-        newSet.add(fileItem);
+        newSelectedFileItems.push(fileItem);
     }
-    emit('update:selectFileItemSet', newSet);
+
+    emit('update:selectFileItems', newSelectedFileItems);
 };
+
 
 const formatDate = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -153,6 +152,8 @@ const previewFile = async (item: FileItem) => {
     const encodedID = encodeURIComponent(item.name);
     router.push(`/preview?path=${encodedPath}&fileID=${encodedID}`);
 }
+
+
 
 
 </script>

@@ -19,6 +19,7 @@ export interface Playlist {
 
 export interface PlayerState {
   currentSong: Song | null
+  currentUrl: string | null
   playlist: Song[]
   isPlaying: boolean
   volume: number

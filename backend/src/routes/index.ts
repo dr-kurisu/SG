@@ -1,10 +1,7 @@
 import express from 'express';
 import cors from 'cors';
-import path from 'path';
 
 import storageRouter from './storageRoutes';
-import previewRouter from './previewRoutes';
-import { clearDirectory, clearDatabase } from '../services/utili';
 // import { scanDirectory } from '../services/utili';
 import accountRouter from './accountRoutes';
 import authenticateToken from '../middlerware/authToken';
@@ -15,7 +12,7 @@ import { playlistRouter } from './playlistRoutes';
 
 
 const initializeDevEnvironment = async () => {
-  await clearDatabase();
+  // await clearDatabase();
   // await scanDirectory("/");
   console.log("dev env initialized.");
 };

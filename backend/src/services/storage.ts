@@ -51,10 +51,7 @@ export const getFileList = async (user_id: string, queryPath: string) => {
             mtime = stats.mtime.toISOString();
         } catch (err: any) {
             if (err.code === 'ENOENT') {
-                console.warn(`文件不存在于磁盘上 即将删除record: ${fullPath}`);
-                removeFileOrFolder(file).catch(e =>
-                    console.error(`删除数据库记录失败: ${file.id}`, e)
-                );
+                console.warn(`文件不存在于磁盘上: ${fullPath}`);
             } else {
                 console.error(`读取文件失败: ${fullPath}`, err);
             }

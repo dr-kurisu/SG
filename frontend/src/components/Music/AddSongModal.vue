@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import type { Playlist, Song } from '@/types/types';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import Swal from 'sweetalert2';
 
 const props = defineProps<{
@@ -35,7 +35,7 @@ const props = defineProps<{
     songs: Song[];
 }>();
 
-const emit = defineEmits(['close', 'songs-added']);
+const emit = defineEmits(['close', 'songs-added', 'fetchSongs']);
 
 const selectedSongs = ref<Set<number>>(new Set());
 
@@ -55,6 +55,10 @@ function toggleSelect(song: Song) {
         });
     }
 }
+
+onMounted(() => {
+    emit("fetchSongs");
+});
 
 </script>
 

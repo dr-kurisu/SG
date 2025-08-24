@@ -6,5 +6,6 @@ module.exports = {
   transform: {
     '^.+\\.ts$': 'ts-jest',
   },
-  globalTeardown: '<rootDir>/dist/globalTeardown.js', // <-- 改为 .ts 路径
+  globalTeardown: '<rootDir>/dist/globalTeardown.js',
+  extensionsToTreatAsEsm: ['.ts'],
 };

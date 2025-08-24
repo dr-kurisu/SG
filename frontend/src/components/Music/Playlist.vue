@@ -20,8 +20,9 @@
         </div>
 
         <!-- 模态框 插入歌曲 -->
-        <AddSongModal v-if="showAddSongModal" :playlist="selectedPlaylist" :songs="mockSongs"
-            @close="showAddSongModal = false" @songs-added="addSongsToPlaylist" />
+        <AddSongModal v-if="showAddSongModal" :playlist="selectedPlaylist" :songs="songs"
+            @close="showAddSongModal = false" @songs-added="addSongsToPlaylist" 
+            @fetch-songs="updateUserSongs"/>
 
         <!-- Playlist info -->
         <div class="playlist-list">
@@ -68,7 +69,6 @@ import { usePlayerStore } from '@/stores/music'
 import { instance as axiosInstance } from '@/api/axios';
 import Swal from 'sweetalert2';
 import AddSongModal from './AddSongModal.vue';
-import { mockSongs } from '@/mock/mockData';
 
 const emit = defineEmits(['play-song']);
 
@@ -76,6 +76,7 @@ const playlists = ref<Playlist[]>([]);
 const selectedPlaylist = ref<Playlist | null>(null);
 const currentSong = ref<Song | null>(null);
 const player = usePlayerStore();
+const songs = ref<Song[]>([]);
 
 const showModalCreatePL = ref(false);
 const showAddSongModal = ref(false);
@@ -89,9 +90,6 @@ const newPlaylist = ref({
 function selectPlaylist(playlist: Playlist) {
     selectedPlaylist.value = playlist;
     player.updatePlaylist(playlist.songs);
-    if (!player.isEmpty) {
-        player.setCurrentSong(playlist.songs[0]);
-    }
 }
 
 // 播放歌曲
@@ -102,8 +100,9 @@ function playSong(song: Song, index: number) {
 
 // 格式化时长
 function formatDuration(seconds: number): string {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
+    const totalSeconds = Math.floor(seconds);
+    const minutes = Math.floor(totalSeconds / 60);
+    const remainingSeconds = totalSeconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 
@@ -120,10 +119,10 @@ async function updatePlaylists(): Promise<void> {
         return;
     }
     playlists.value = res.data;
-    updateSongs();
+    updateSongsInPlaylist();
 }
 
-async function updateSongs(): Promise<void> {
+async function updateSongsInPlaylist(): Promise<void> {
     const playlist_id = selectedPlaylist.value?.id;
     if (!playlist_id) return;
 
@@ -136,11 +135,10 @@ async function updateSongs(): Promise<void> {
             throw new Error(`Failed to fetch songs, status: ${res.status}`);
         }
     } catch (err) {
-        console.error(err);
         Swal.fire({
             icon: 'error',
-            title: '更新歌曲失败',
-            text: '请稍后重试',
+            title: 'Fail to update songs',
+            text: 'Please try again latter',
             showConfirmButton: true,
             timer: 1500
         });
@@ -178,7 +176,6 @@ async function createPlaylist(): Promise<void> {
     }
 }
 
-
 async function addSongsToPlaylist(songs_id: Set<number>) {
     if (songs_id.size <= 0) {
         showAddSongModal.value = false;
@@ -192,7 +189,7 @@ async function addSongsToPlaylist(songs_id: Set<number>) {
 
         if (res.status === 201 || res.status === 200) {
             showAddSongModal.value = false;
-            updateSongs();
+            updateSongsInPlaylist();
             Swal.fire({
                 icon: "success",
                 title: `Successfully added ${songs_id.size} songs`,
@@ -213,6 +210,20 @@ async function addSongsToPlaylist(songs_id: Set<number>) {
         });
     }
 }
+
+async function updateUserSongs(): Promise<void> {
+    try {
+        const res = await axiosInstance.get('/api/songs/get-songs');
+        songs.value = res.data;
+    } catch (err) {
+        Swal.fire({
+            icon: "error",
+            title: "Fail to update user songs",
+            text: `Please try again latter`,
+            showCloseButton: true,
+        });
+    }
+}
 // watch player.currentSong
 watch(() => player.currentSong, (newSong) => {
     currentSong.value = newSong;
@@ -220,6 +231,7 @@ watch(() => player.currentSong, (newSong) => {
 
 onBeforeMount(() => {
     updatePlaylists();
+    updateUserSongs();
 })
 
 </script>

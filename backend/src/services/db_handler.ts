@@ -374,8 +374,17 @@ export const SongHandler = {
         return song || null;
     },
 
+    // Get songs by user_id (have not tested)
+    getSongsByUserID: async(user_id: string) => {
+        db = await initDB();
+        const songs = await db.all<SongRecord[]>(
+            `SELECT * FROM songs s JOIN files f ON s.file_id = f.id WHERE f.user_id = ?`,
+            [user_id]
+        );
+        return songs;
+    },
+
     // Remove songRecord by song_id
-    // 是否要级联删除？？？
     removeSongByID: async (song_id: number) => {
         db = await initDB();
         const result = await db.run(`DELETE FROM songs WHERE id = ?;`, [song_id]);
