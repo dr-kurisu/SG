@@ -217,10 +217,10 @@ async function updateUserSongs(): Promise<void> {
         songs.value = res.data;
     } catch (err) {
         Swal.fire({
+            toast: true,
             icon: "error",
             title: "Fail to update user songs",
-            text: `Please try again latter`,
-            showCloseButton: true,
+            timer: 3000,
         });
     }
 }

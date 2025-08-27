@@ -58,7 +58,7 @@
                 </span>
 
                 <!-- 复选框，最右 -->
-                <input type="checkbox" :value="item.name" :checked="props.selectFileItems.includes(item)"
+                <input type="checkbox" :disabled="disbaleFileItems.has(item.id)" :value="item.name" :checked="props.selectFileItems.includes(item)"
                     @click.stop="toggleSelection(item)"
                     class="form-checkbox text-blue-600 scale-150 absolute right-4 top-1/2 -translate-y-1/2" />
             </li>
@@ -70,7 +70,7 @@
 <script setup lang="ts">
 import type { FileItem } from '@/types/types';
 import { ref } from 'vue';
-import { getFileIcon, files, currentPath } from '@/storage/cloudstorage';
+import { getFileIcon, files, currentPath, disbaleFileItems } from '@/storage/cloudstorage';
 import { useRouter } from 'vue-router';
 
 const props = defineProps<{

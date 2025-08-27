@@ -5,8 +5,9 @@
         <FunctionButtons />
 
         <!-- 操作栏 -->
-        <OperationBar :path-parts="pathParts" :select-file-items="selectFileItems" @back="back" @go-root="goRoot"
-            @refresh="refresh" @remove-files="removeFiles" @go-to="goTo" @add-songs="addSongsV2"/>
+        <OperationBar v-model:select-file-items="selectFileItems" v-model:disbale-file-items="disbaleFileItems"
+            :path-parts="pathParts" :files="files" @back="back" @go-root="goRoot" @refresh="refresh"
+            @remove-files="removeFiles" @go-to="goTo" @toggle-add-songs="" />
 
         <!-- 文件列表容器 -->
         <FileList v-model:selectFileItems="selectFileItems" @fetch-files-v2="fetchFilesV2" />
@@ -14,7 +15,7 @@
 </template>
 
 <script lang="ts" setup>
-import { currentPath, fetchFiles, handleAddSongs, refresh, removeFile } from '../storage/cloudstorage'
+import { currentPath, fetchFiles, files, handleAddSongs, refresh, removeFile } from '../storage/cloudstorage'
 import type { FileItem } from '@/types/types';
 import { useRoute } from 'vue-router';
 import { onMounted, computed, ref } from 'vue';
@@ -26,6 +27,7 @@ import FileList from '@/components/Disk/FileList.vue';
 const route = useRoute();
 const pathParts = computed(() => currentPath.value.split('/').filter(Boolean));
 const selectFileItems = ref<FileItem[]>([]);
+const disbaleFileItems = new Set<number>();
 
 const fetchFilesV2 = async (path: string) => {
     console.log('Fetching files for path:', path);

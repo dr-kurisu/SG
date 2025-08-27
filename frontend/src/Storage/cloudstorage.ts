@@ -6,6 +6,8 @@ import type { FileItem, Song } from '@/types/types';
 
 export const files = ref<FileItem[]>([]);
 export const currentPath = ref('/');
+export const disbaleFileItems = ref<Set<number>>(new Set());
+export const isAdding = ref(false);
 
 export const fetchFiles = async (path: string = '/') => {
     try {
@@ -214,6 +216,22 @@ export const handleAddSongs = async (selectedFiles: FileItem[]) => {
         });
     }
 };
+
+export const getUserSongs = async () => {
+    try {
+        const res = await axiosInstance.get('/api/songs/get-songs');
+        const songs: Song[] = res.data;
+        return songs;
+    } catch (err) {
+        Swal.fire({
+            toast: true,
+            position: "top-end",
+            icon: "error", 
+            title: "Fail to update user songs",
+        });
+        return [];
+    }
+}
 
 // function used to display icon for each file type
 export const getFileIcon = (filename: string): string => {
