@@ -2,6 +2,9 @@
     <div class="playlist-container">
         <div class="playlist-header">
             <h2 class="playlist-title">播放列表</h2>
+            <button class="btn-refresh" @click="updateInfo">
+                <i class="fas fa-redo mr-1"></i>
+            </button>
             <button class="add-playlist-btn" @click="showModalCreatePL = true">+</button>
         </div>
 
@@ -21,8 +24,7 @@
 
         <!-- 模态框 插入歌曲 -->
         <AddSongModal v-if="showAddSongModal" :playlist="selectedPlaylist" :songs="songs"
-            @close="showAddSongModal = false" @songs-added="addSongsToPlaylist" 
-            @fetch-songs="updateUserSongs"/>
+            @close="showAddSongModal = false" @songs-added="addSongsToPlaylist" @fetch-songs="updateUserSongs" />
 
         <!-- Playlist info -->
         <div class="playlist-list">
@@ -88,14 +90,37 @@ const newPlaylist = ref({
 
 // 选择播放列表
 function selectPlaylist(playlist: Playlist) {
+    updatePlaylists();
     selectedPlaylist.value = playlist;
     player.updatePlaylist(playlist.songs);
 }
 
 // 播放歌曲
 function playSong(song: Song, index: number) {
-    currentSong.value = song
-    emit('play-song', song, index)
+    updateSongsInPlaylist();
+    currentSong.value = song;
+    emit('play-song', song, index);
+}
+
+// 刷新按钮
+async function updateInfo() {
+    try {
+        await Promise.all([
+            updatePlaylists(),
+            updateSongsInPlaylist(),
+            updateUserSongs()
+        ]);
+        Swal.fire({
+            icon: 'success',
+            toast: true,
+            title: 'Successfully refreshed',
+            timer: 2000,
+            position: "top",
+            showConfirmButton: false,
+        })
+    } catch (err) {
+        console.error("Failed to update info:", err);
+    }
 }
 
 // 格式化时长
@@ -177,6 +202,9 @@ async function createPlaylist(): Promise<void> {
 }
 
 async function addSongsToPlaylist(songs_id: Set<number>) {
+    // test
+    console.log(songs_id);
+
     if (songs_id.size <= 0) {
         showAddSongModal.value = false;
         return;
@@ -475,5 +503,19 @@ onBeforeMount(() => {
 .modal-actions button:last-child {
     background: #ccc;
     color: #333;
+}
+
+.btn-back, .btn-refresh {
+    font-size: 0.875rem;
+    color: #2563eb;
+    transition: transform 0.1s;
+}
+
+.btn-refresh:hover {
+    transform: scale(0.90) rotate(25deg);
+}
+
+.btn-refresh:active {
+    transform: scale(0.85) rotate(90deg);
 }
 </style>

@@ -6,13 +6,16 @@
             <h3>添加到 {{ playlist?.name || "UNKNOWN" }}</h3>
             <!--display all songs user had-->
             <div class="song-list">
-                <div v-for="song in songs" :key="song.id" class="song-item"
+                <div v-for="song in filteredSongs" :key="song.id" class="song-item"
                     :class="{ selected: selectedSongs.has(song.id) }" @click="toggleSelect(song)">
                     <div class="song-info">
                         <h4 class="song-title"> {{ song.title }} </h4>
                         <h4 class="song-artist"> {{ song.artist }}</h4>
                     </div>
                 </div>
+            </div>
+            <div v-if="filteredSongs.length === 0" class="warning">
+                No available song
             </div>
 
 
@@ -27,13 +30,23 @@
 
 <script setup lang="ts">
 import type { Playlist, Song } from '@/types/types';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import Swal from 'sweetalert2';
+import { usePlayerStore } from '@/stores/music'
 
 const props = defineProps<{
     playlist: Playlist | null;
     songs: Song[];
 }>();
+
+const player = usePlayerStore();
+
+const filteredSongs = computed(() => {
+    if (props.playlist) {
+        return props.songs.filter(song => !player.currentPlaylist.some(playlistSong => playlistSong.id === song.id));
+    }
+    return props.songs;
+});
 
 const emit = defineEmits(['close', 'songs-added', 'fetchSongs']);
 
@@ -70,15 +83,16 @@ onMounted(() => {
     align-items: flex-start;
     gap: 2px;
 }
+
 .song-title {
-  font-weight: 500;
-  font-size: 0.95rem;
-  color: #1b1b1b;
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: #1b1b1b;
 }
 
 .song-artist {
-  font-size: 0.65rem;
-  color: #959595;
+    font-size: 0.65rem;
+    color: #959595;
 }
 
 .modal-overlay {
@@ -138,8 +152,21 @@ onMounted(() => {
 /* 文本溢出 */
 .song-title,
 .song-artist {
-  white-space: nowrap;       /* 不换行 */
-  overflow: hidden;          /* 超出隐藏 */
-  text-overflow: ellipsis;   /* 显示省略号 */
+    white-space: nowrap;
+    /* 不换行 */
+    overflow: hidden;
+    /* 超出隐藏 */
+    text-overflow: ellipsis;
+    /* 显示省略号 */
 }
+
+.warning {
+  color: #d9534f; /* Red color to indicate warning */
+  font-size: 1.2em;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 20px;
+}
+
+
 </style>

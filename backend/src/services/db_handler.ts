@@ -3,6 +3,7 @@ import { open, Database } from 'sqlite';
 import { FileRecord, Playlist, SongRecord, UserRecord } from "./types";
 import path from "path";
 import bcrypt from "bcryptjs";
+import logger from "../logger/logger"
 
 let db: Database | null = null;
 let dbPromise: Promise<Database> | null = null;
@@ -20,6 +21,9 @@ export const initDB = async (): Promise<Database> => {
             filename: dbPath,
             driver: sqlite3.Database,
         });
+        // Foreign Key contrain
+        await newDB.exec("PRAGMA foreign_keys = ON;");
+
         // Files table
         await newDB.exec(`
             CREATE TABLE IF NOT EXISTS files (
@@ -200,6 +204,12 @@ export const FileHandler = {
         await db.run(`UPDATE files SET is_deleted = 1 WHERE id = ?`, [id]);
     },
 
+    // Enforce remove file by id
+    quicklyRemoveById: async (id: number): Promise<void> => {
+        const db = await initDB();
+        await db.run(`DELETE FROM files WHERE id = ?`, [id]);
+    },
+
     // 删除文件By Given start path
     removeByStartPath: async (startPath: string, user_id: string): Promise<void> => {
         console.log(`Removing files with start path: ${startPath} for user: ${user_id}`);
@@ -337,7 +347,7 @@ export const UserHandler = {
 
 export const SongHandler = {
     // Insert song
-    insert: async(song: SongRecord) => {
+    insert: async (song: SongRecord) => {
         db = await initDB();
         try {
             const result = await db.run(
@@ -355,7 +365,7 @@ export const SongHandler = {
     },
 
     // Get songRecord by song_id
-    getSongByID: async(song_id: number) => {
+    getSongByID: async (song_id: number) => {
         db = await initDB();
         const song = await db.get<SongRecord>(`
             SELECT * FROM songs s JOIN files f ON s.file_id = f.id WHERE s.id = ?;`,
@@ -375,10 +385,14 @@ export const SongHandler = {
     },
 
     // Get songs by user_id (have not tested)
-    getSongsByUserID: async(user_id: string) => {
+    getSongsByUserID: async (user_id: string) => {
         db = await initDB();
         const songs = await db.all<SongRecord[]>(
-            `SELECT * FROM songs s JOIN files f ON s.file_id = f.id WHERE f.user_id = ?`,
+            `SELECT *
+             FROM songs s
+             JOIN files f ON 
+             s.file_id = f.id 
+             WHERE f.user_id = ?`,
             [user_id]
         );
         return songs;
@@ -394,17 +408,17 @@ export const SongHandler = {
 
 export const PlayListHandler = {
     // Create playlist
-    createPlaylist: async(playlist: Playlist) => {
+    createPlaylist: async (playlist: Playlist) => {
         db = await initDB();
         const result = await db.run(`
             INSERT INTO playlists (name, user_id, description, cover)
             VALUES (?, ?, ?, ?);`,
-            [playlist.name, playlist.user_id, playlist.description??null, playlist.cover??null]
+            [playlist.name, playlist.user_id, playlist.description ?? null, playlist.cover ?? null]
         );
         if (!result.lastID) throw new Error(`Fail to create playlist ${playlist.name}`);
         return result.lastID!;
     },
-    
+
     // Get playlist by user_id
     getPlaylistsByUserID: async (user_id: string) => {
         db = await initDB();
@@ -415,7 +429,7 @@ export const PlayListHandler = {
         return playlists;
     },
 
-    getPlaylistByID: async(playlist_id: number) => {
+    getPlaylistByID: async (playlist_id: number) => {
         db = await initDB();
         const result = await db.get<Playlist>(`
             SELECT * FROM playlists WHERE id =  ?;`,
@@ -437,21 +451,29 @@ export const PlayListHandler = {
     // Add song to a playlist
     addSongToPlaylist: async (playlist_id: number, song_id: number) => {
         db = await initDB();
+        logger.debug(`Attempting to add song_id: ${song_id} to playlist_id: ${playlist_id}`);
         try {
             // Check existance of playlist_id
             const playlist = await db.get(`SELECT 1 FROM playlists WHERE id = ?`, [playlist_id]);
-            if (!playlist) throw new Error('Playlist does not exist');
+            if (!playlist) {
+                logger.warn(`Playlist_id: ${playlist_id} does not exist`);
+                throw new Error('Playlist does not exist');
+            }
             // Check existance of song_id
             const song = await db.get(`SELECT 1 FROM songs WHERE id = ?`, [song_id]);
-            if (!song) throw new Error('Song does not exist');
-            
+            if (!song) {
+                logger.warn(`Song_id: ${song_id} does not exist`);
+                throw new Error('Song does not exist');
+            }
+
             await db.run(
                 `INSERT OR IGNORE INTO playlistEntries (playlist_id, song_id) VALUES (?, ?)`,
                 [playlist_id, song_id]
             );
+            logger.info(`Successfully added ${song_id} to ${playlist_id}`);
             return true;
-        } catch (err) {
-            console.error(err);
+        } catch (err: any) {
+            logger.error(`Error adding song to playlist: ${err.message}`, { playlist_id, song_id, stack: err.stack });
             throw err;
         }
     },
@@ -476,6 +498,9 @@ export const PlayListHandler = {
              WHERE pe.playlist_id = ?`,
             [playlist_id]
         );
+        logger.debug(`Get songs in playlist_id: ${playlist_id}`);
+        logger.debug(`Songs: ${JSON.stringify(songs, null, 4)}`);
+
         return songs;
     },
 
@@ -494,13 +519,15 @@ export const PlayListHandler = {
 function handleInsertionSQLError(error: unknown): never {
     if (error instanceof Error) {
         if (error.message.includes('SQLITE_CONSTRAINT: FOREIGN KEY')) {
+            logger.error(`数据库外键约束错误 ${error.message}`, {stack: error.stack});
             throw new Error(`数据库外键约束错误: ${error.message}`);
         }
         if (error.message.includes('SQLITE_CONSTRAINT: UNIQUE')) {
+            logger.error(`数据不唯一 ${error.message}`, {stack: error.stack});
             throw new Error(`数据不唯一: ${error.message}`);
         }
-        
+
     }
-    console.error('插入失败:', error);
-    throw new Error(`插入失败: ${error instanceof Error ? error.message : String(error)}`);
+    logger.error(`Fail to insert ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(`Fail to insert: ${error instanceof Error ? error.message : String(error)}`);
 }

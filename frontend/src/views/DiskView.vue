@@ -5,7 +5,7 @@
         <FunctionButtons />
 
         <!-- 操作栏 -->
-        <OperationBar v-model:select-file-items="selectFileItems" v-model:disbale-file-items="disbaleFileItems"
+        <OperationBar v-model:select-file-items="selectFileItems"
             :path-parts="pathParts" :files="files" @back="back" @go-root="goRoot" @refresh="refresh"
             @remove-files="removeFiles" @go-to="goTo" @toggle-add-songs="" />
 
@@ -15,7 +15,7 @@
 </template>
 
 <script lang="ts" setup>
-import { currentPath, fetchFiles, files, handleAddSongs, refresh, removeFile } from '../storage/cloudstorage'
+import { currentPath, fetchFiles, files, refresh, removeFile } from '../storage/cloudstorage'
 import type { FileItem } from '@/types/types';
 import { useRoute } from 'vue-router';
 import { onMounted, computed, ref } from 'vue';
@@ -27,7 +27,6 @@ import FileList from '@/components/Disk/FileList.vue';
 const route = useRoute();
 const pathParts = computed(() => currentPath.value.split('/').filter(Boolean));
 const selectFileItems = ref<FileItem[]>([]);
-const disbaleFileItems = new Set<number>();
 
 const fetchFilesV2 = async (path: string) => {
     console.log('Fetching files for path:', path);
@@ -100,19 +99,6 @@ const back = () => {
     fetchFilesV2(currentPath.value);
 }
 
-const addSongsV2 = async () => {
-    if (selectFileItems.value.length === 0) {
-        Swal.fire({
-            icon: "info",
-            title: "Prompt",
-            text: "Please select files you want to add"
-        });
-        return;
-    }
-
-    await handleAddSongs(selectFileItems.value);
-    selectFileItems.value = [];
-}
 
 onMounted(() => {
     if (route.query.path) {

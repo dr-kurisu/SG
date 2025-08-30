@@ -29,7 +29,7 @@ export interface UserRecord {
 }
 
 export interface SongRecord extends FileRecord {
-    id?: number,
+    song_id?: number,
     file_id: number,
     title: string,
     artist?: string,

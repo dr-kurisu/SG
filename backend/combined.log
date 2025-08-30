@@ -1,0 +1,145 @@
+{"level":"debug","message":"Get user songs in playlist_id:","timestamp":"2025-08-30T12:24:47.667Z"}
+{"level":"debug","message":"Songs:","timestamp":"2025-08-30T12:24:47.670Z"}
+{"level":"debug","message":"Get user songs in playlist_id:","timestamp":"2025-08-30T12:24:47.672Z"}
+{"level":"debug","message":"Songs:","timestamp":"2025-08-30T12:24:47.673Z"}
+{"level":"debug","message":"Get songs in playlist_id: 2","timestamp":"2025-08-30T12:27:05.843Z"}
+{"level":"debug","message":"Songs: [\n  {\n    \"id\": 1,\n    \"file_id\": 1,\n    \"title\": \"GATE OF STEINER (game size)\",\n    \"artist\": \"佐々木恵梨\",\n    \"cover\": \"\",\n    \"duration\": 187.35020408163265\n  }\n]","timestamp":"2025-08-30T12:27:05.847Z"}
+{"level":"debug","message":"Get songs in playlist_id: 1","timestamp":"2025-08-30T12:27:05.848Z"}
+{"level":"debug","message":"Songs: [\n  {\n    \"id\": 1,\n    \"file_id\": 1,\n    \"title\": \"GATE OF STEINER (game size)\",\n    \"artist\": \"佐々木恵梨\",\n    \"cover\": \"\",\n    \"duration\": 187.35020408163265\n  }\n]","timestamp":"2025-08-30T12:27:05.849Z"}
+{"level":"debug","message":"Get songs in playlist_id: 2","timestamp":"2025-08-30T12:27:39.007Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"GATE OF STEINER (game size)\",\n        \"artist\": \"佐々木恵梨\",\n        \"cover\": \"\",\n        \"duration\": 187.35020408163265\n    }\n]","timestamp":"2025-08-30T12:27:39.012Z"}
+{"level":"debug","message":"Get songs in playlist_id: 1","timestamp":"2025-08-30T12:27:39.016Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"GATE OF STEINER (game size)\",\n        \"artist\": \"佐々木恵梨\",\n        \"cover\": \"\",\n        \"duration\": 187.35020408163265\n    }\n]","timestamp":"2025-08-30T12:27:39.017Z"}
+{"level":"debug","message":"Get songs in playlist_id: 2","timestamp":"2025-08-30T12:47:37.471Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"GATE OF STEINER (game size)\",\n        \"artist\": \"佐々木恵梨\",\n        \"cover\": \"\",\n        \"duration\": 187.35020408163265\n    }\n]","timestamp":"2025-08-30T12:47:37.472Z"}
+{"level":"debug","message":"Get songs in playlist_id: 1","timestamp":"2025-08-30T12:47:37.473Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"GATE OF STEINER (game size)\",\n        \"artist\": \"佐々木恵梨\",\n        \"cover\": \"\",\n        \"duration\": 187.35020408163265\n    }\n]","timestamp":"2025-08-30T12:47:37.473Z"}
+{"level":"debug","message":"Get songs in playlist_id: 1","timestamp":"2025-08-30T12:51:46.936Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"GATE OF STEINER (game size)\",\n        \"artist\": \"佐々木恵梨\",\n        \"cover\": \"\",\n        \"duration\": 187.35020408163265\n    }\n]","timestamp":"2025-08-30T12:51:46.940Z"}
+{"level":"debug","message":"Get songs in playlist_id: 2","timestamp":"2025-08-30T12:51:46.942Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"GATE OF STEINER (game size)\",\n        \"artist\": \"佐々木恵梨\",\n        \"cover\": \"\",\n        \"duration\": 187.35020408163265\n    }\n]","timestamp":"2025-08-30T12:51:46.943Z"}
+{"level":"debug","message":"Get songs in playlist_id: 2","timestamp":"2025-08-30T12:51:49.192Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"GATE OF STEINER (game size)\",\n        \"artist\": \"佐々木恵梨\",\n        \"cover\": \"\",\n        \"duration\": 187.35020408163265\n    }\n]","timestamp":"2025-08-30T12:51:49.193Z"}
+{"level":"debug","message":"Get songs in playlist_id: 1","timestamp":"2025-08-30T12:51:49.195Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"GATE OF STEINER (game size)\",\n        \"artist\": \"佐々木恵梨\",\n        \"cover\": \"\",\n        \"duration\": 187.35020408163265\n    }\n]","timestamp":"2025-08-30T12:51:49.195Z"}
+{"level":"debug","message":"Get songs in playlist_id: 1","timestamp":"2025-08-30T12:51:49.214Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"GATE OF STEINER (game size)\",\n        \"artist\": \"佐々木恵梨\",\n        \"cover\": \"\",\n        \"duration\": 187.35020408163265\n    }\n]","timestamp":"2025-08-30T12:51:49.217Z"}
+{"level":"debug","message":"Get songs in playlist_id: 1","timestamp":"2025-08-30T12:52:37.407Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"GATE OF STEINER (game size)\",\n        \"artist\": \"佐々木恵梨\",\n        \"cover\": \"\",\n        \"duration\": 187.35020408163265\n    }\n]","timestamp":"2025-08-30T12:52:37.414Z"}
+{"level":"debug","message":"Get songs in playlist_id: 2","timestamp":"2025-08-30T12:52:48.780Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"GATE OF STEINER (game size)\",\n        \"artist\": \"佐々木恵梨\",\n        \"cover\": \"\",\n        \"duration\": 187.35020408163265\n    }\n]","timestamp":"2025-08-30T12:52:48.782Z"}
+{"level":"debug","message":"Get songs in playlist_id: 1","timestamp":"2025-08-30T12:52:48.783Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"GATE OF STEINER (game size)\",\n        \"artist\": \"佐々木恵梨\",\n        \"cover\": \"\",\n        \"duration\": 187.35020408163265\n    }\n]","timestamp":"2025-08-30T12:52:48.784Z"}
+{"level":"debug","message":"Get songs in playlist_id: 2","timestamp":"2025-08-30T12:52:48.808Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"GATE OF STEINER (game size)\",\n        \"artist\": \"佐々木恵梨\",\n        \"cover\": \"\",\n        \"duration\": 187.35020408163265\n    }\n]","timestamp":"2025-08-30T12:52:48.809Z"}
+{"level":"debug","message":"Attempting to add song_id: 5 to playlist_id: 2","timestamp":"2025-08-30T12:53:14.802Z"}
+{"level":"warn","message":"Song_id: 5 does not exist","timestamp":"2025-08-30T12:53:14.806Z"}
+{"level":"error","message":"Error adding song to playlist: Song does not exist","playlist_id":2,"song_id":5,"stack":"Error: Song does not exist\n    at Object.addSongToPlaylist (Z:\\SG\\backend\\src\\services\\db_handler.ts:466:23)\n    at async <anonymous> (Z:\\SG\\backend\\src\\routes\\playlistRoutes.ts:108:28)","timestamp":"2025-08-30T12:53:14.815Z"}
+{"level":"error","message":"数据不唯一 SQLITE_CONSTRAINT: UNIQUE constraint failed: songs.file_id","stack":"Error: SQLITE_CONSTRAINT: UNIQUE constraint failed: songs.file_id\n    at formatError (Z:\\SG\\backend\\node_modules\\sqlite\\src\\utils\\format-error.ts:7:22)\n    at Statement.<anonymous> (Z:\\SG\\backend\\node_modules\\sqlite\\src\\Database.ts:122:36)","timestamp":"2025-08-30T13:12:16.326Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:12:17.036Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:12:17.042Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:12:17.236Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:12:17.242Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:12:17.341Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:12:17.346Z"}
+{"level":"debug","message":"Get songs in playlist_id: 1","timestamp":"2025-08-30T13:12:17.346Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"test_song_title\",\n        \"artist\": null,\n        \"cover\": null,\n        \"duration\": 100\n    }\n]","timestamp":"2025-08-30T13:12:17.348Z"}
+{"level":"error","message":"数据不唯一 SQLITE_CONSTRAINT: UNIQUE constraint failed: songs.file_id","stack":"Error: SQLITE_CONSTRAINT: UNIQUE constraint failed: songs.file_id\n    at formatError (Z:\\SG\\backend\\node_modules\\sqlite\\src\\utils\\format-error.ts:7:22)\n    at Statement.<anonymous> (Z:\\SG\\backend\\node_modules\\sqlite\\src\\Database.ts:122:36)","timestamp":"2025-08-30T13:13:52.673Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:13:53.376Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:13:53.383Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:13:53.745Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:13:53.752Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:13:53.854Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:13:53.861Z"}
+{"level":"debug","message":"Get songs in playlist_id: 1","timestamp":"2025-08-30T13:13:53.863Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"test_song_title\",\n        \"artist\": null,\n        \"cover\": null,\n        \"duration\": 100\n    }\n]","timestamp":"2025-08-30T13:13:53.863Z"}
+{"level":"error","message":"数据不唯一 SQLITE_CONSTRAINT: UNIQUE constraint failed: songs.file_id","stack":"Error: SQLITE_CONSTRAINT: UNIQUE constraint failed: songs.file_id\n    at formatError (Z:\\SG\\backend\\node_modules\\sqlite\\src\\utils\\format-error.ts:7:22)\n    at Statement.<anonymous> (Z:\\SG\\backend\\node_modules\\sqlite\\src\\Database.ts:122:36)","timestamp":"2025-08-30T13:17:34.265Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:17:34.826Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:17:34.831Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:17:35.011Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:17:35.016Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:17:35.121Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:17:35.129Z"}
+{"level":"debug","message":"Get songs in playlist_id: 1","timestamp":"2025-08-30T13:17:35.131Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"test_song_title\",\n        \"artist\": null,\n        \"cover\": null,\n        \"duration\": 100\n    }\n]","timestamp":"2025-08-30T13:17:35.132Z"}
+{"level":"error","message":"数据不唯一 SQLITE_CONSTRAINT: UNIQUE constraint failed: songs.file_id","stack":"Error: SQLITE_CONSTRAINT: UNIQUE constraint failed: songs.file_id\n    at formatError (Z:\\SG\\backend\\node_modules\\sqlite\\src\\utils\\format-error.ts:7:22)\n    at Statement.<anonymous> (Z:\\SG\\backend\\node_modules\\sqlite\\src\\Database.ts:122:36)","timestamp":"2025-08-30T13:21:07.110Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:21:07.847Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:21:07.856Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:21:08.128Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:21:08.136Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:21:08.271Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:21:08.278Z"}
+{"level":"debug","message":"Get songs in playlist_id: 1","timestamp":"2025-08-30T13:21:08.281Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"test_song_title\",\n        \"artist\": null,\n        \"cover\": null,\n        \"duration\": 100\n    }\n]","timestamp":"2025-08-30T13:21:08.281Z"}
+{"level":"error","message":"数据不唯一 SQLITE_CONSTRAINT: UNIQUE constraint failed: songs.file_id","stack":"Error: SQLITE_CONSTRAINT: UNIQUE constraint failed: songs.file_id\n    at formatError (Z:\\SG\\backend\\node_modules\\sqlite\\src\\utils\\format-error.ts:7:22)\n    at Statement.<anonymous> (Z:\\SG\\backend\\node_modules\\sqlite\\src\\Database.ts:122:36)","timestamp":"2025-08-30T13:22:07.868Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:22:08.742Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:22:08.747Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:22:09.093Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:22:09.097Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:22:09.186Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:22:09.190Z"}
+{"level":"debug","message":"Get songs in playlist_id: 1","timestamp":"2025-08-30T13:22:09.191Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"test_song_title\",\n        \"artist\": null,\n        \"cover\": null,\n        \"duration\": 100\n    }\n]","timestamp":"2025-08-30T13:22:09.192Z"}
+{"level":"error","message":"数据不唯一 SQLITE_CONSTRAINT: UNIQUE constraint failed: songs.file_id","stack":"Error: SQLITE_CONSTRAINT: UNIQUE constraint failed: songs.file_id\n    at formatError (Z:\\SG\\backend\\node_modules\\sqlite\\src\\utils\\format-error.ts:7:22)\n    at Statement.<anonymous> (Z:\\SG\\backend\\node_modules\\sqlite\\src\\Database.ts:122:36)","timestamp":"2025-08-30T13:23:30.541Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:23:31.092Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:23:31.098Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:23:31.368Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:23:31.377Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:23:31.528Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:23:31.534Z"}
+{"level":"debug","message":"Get songs in playlist_id: 1","timestamp":"2025-08-30T13:23:31.537Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"test_song_title\",\n        \"artist\": null,\n        \"cover\": null,\n        \"duration\": 100\n    }\n]","timestamp":"2025-08-30T13:23:31.540Z"}
+{"level":"error","message":"数据不唯一 SQLITE_CONSTRAINT: UNIQUE constraint failed: songs.file_id","stack":"Error: SQLITE_CONSTRAINT: UNIQUE constraint failed: songs.file_id\n    at formatError (Z:\\SG\\backend\\node_modules\\sqlite\\src\\utils\\format-error.ts:7:22)\n    at Statement.<anonymous> (Z:\\SG\\backend\\node_modules\\sqlite\\src\\Database.ts:122:36)","timestamp":"2025-08-30T13:23:58.899Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:23:59.595Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:23:59.603Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:23:59.952Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:23:59.961Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:24:00.060Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:24:00.065Z"}
+{"level":"debug","message":"Get songs in playlist_id: 1","timestamp":"2025-08-30T13:24:00.066Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"test_song_title\",\n        \"artist\": null,\n        \"cover\": null,\n        \"duration\": 100\n    }\n]","timestamp":"2025-08-30T13:24:00.066Z"}
+{"level":"error","message":"数据不唯一 SQLITE_CONSTRAINT: UNIQUE constraint failed: songs.file_id","stack":"Error: SQLITE_CONSTRAINT: UNIQUE constraint failed: songs.file_id\n    at formatError (Z:\\SG\\backend\\node_modules\\sqlite\\src\\utils\\format-error.ts:7:22)\n    at Statement.<anonymous> (Z:\\SG\\backend\\node_modules\\sqlite\\src\\Database.ts:122:36)","timestamp":"2025-08-30T13:24:27.841Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:24:28.640Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:24:28.647Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:24:29.033Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:24:29.040Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:24:29.142Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:24:29.148Z"}
+{"level":"debug","message":"Get songs in playlist_id: 1","timestamp":"2025-08-30T13:24:29.149Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"test_song_title\",\n        \"artist\": null,\n        \"cover\": null,\n        \"duration\": 100\n    }\n]","timestamp":"2025-08-30T13:24:29.150Z"}
+{"level":"error","message":"数据不唯一 SQLITE_CONSTRAINT: UNIQUE constraint failed: songs.file_id","stack":"Error: SQLITE_CONSTRAINT: UNIQUE constraint failed: songs.file_id\n    at formatError (Z:\\SG\\backend\\node_modules\\sqlite\\src\\utils\\format-error.ts:7:22)\n    at Statement.<anonymous> (Z:\\SG\\backend\\node_modules\\sqlite\\src\\Database.ts:122:36)","timestamp":"2025-08-30T13:26:50.007Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:26:50.535Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:26:50.541Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:26:50.766Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:26:50.774Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:26:50.873Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:26:50.879Z"}
+{"level":"debug","message":"Get songs in playlist_id: 1","timestamp":"2025-08-30T13:26:50.881Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"test_song_title\",\n        \"artist\": null,\n        \"cover\": null,\n        \"duration\": 100\n    }\n]","timestamp":"2025-08-30T13:26:50.882Z"}
+{"level":"error","message":"数据不唯一 SQLITE_CONSTRAINT: UNIQUE constraint failed: songs.file_id","stack":"Error: SQLITE_CONSTRAINT: UNIQUE constraint failed: songs.file_id\n    at formatError (Z:\\SG\\backend\\node_modules\\sqlite\\src\\utils\\format-error.ts:7:22)\n    at Statement.<anonymous> (Z:\\SG\\backend\\node_modules\\sqlite\\src\\Database.ts:122:36)","timestamp":"2025-08-30T13:27:01.832Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:27:02.326Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:27:02.332Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:27:02.522Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:27:02.528Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:27:02.688Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:27:02.692Z"}
+{"level":"debug","message":"Get songs in playlist_id: 1","timestamp":"2025-08-30T13:27:02.693Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"test_song_title\",\n        \"artist\": null,\n        \"cover\": null,\n        \"duration\": 100\n    }\n]","timestamp":"2025-08-30T13:27:02.694Z"}
+{"level":"error","message":"数据不唯一 SQLITE_CONSTRAINT: UNIQUE constraint failed: songs.file_id","stack":"Error: SQLITE_CONSTRAINT: UNIQUE constraint failed: songs.file_id\n    at formatError (Z:\\SG\\backend\\node_modules\\sqlite\\src\\utils\\format-error.ts:7:22)\n    at Statement.<anonymous> (Z:\\SG\\backend\\node_modules\\sqlite\\src\\Database.ts:122:36)","timestamp":"2025-08-30T13:30:31.695Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:30:32.332Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:30:32.339Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:30:32.627Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:30:32.640Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:30:32.759Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:30:32.765Z"}
+{"level":"debug","message":"Get songs in playlist_id: 1","timestamp":"2025-08-30T13:30:32.769Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"test_song_title\",\n        \"artist\": null,\n        \"cover\": null,\n        \"duration\": 100\n    }\n]","timestamp":"2025-08-30T13:30:32.769Z"}
+{"level":"error","message":"数据不唯一 SQLITE_CONSTRAINT: UNIQUE constraint failed: songs.file_id","stack":"Error: SQLITE_CONSTRAINT: UNIQUE constraint failed: songs.file_id\n    at formatError (Z:\\SG\\backend\\node_modules\\sqlite\\src\\utils\\format-error.ts:7:22)\n    at Statement.<anonymous> (Z:\\SG\\backend\\node_modules\\sqlite\\src\\Database.ts:122:36)","timestamp":"2025-08-30T13:31:49.182Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:31:49.741Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:31:49.749Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:31:49.961Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:31:49.969Z"}
+{"level":"debug","message":"Attempting to add song_id: 1 to playlist_id: 1","timestamp":"2025-08-30T13:31:50.081Z"}
+{"level":"info","message":"Successfully added 1 to 1","timestamp":"2025-08-30T13:31:50.086Z"}
+{"level":"debug","message":"Get songs in playlist_id: 1","timestamp":"2025-08-30T13:31:50.088Z"}
+{"level":"debug","message":"Songs: [\n    {\n        \"id\": 1,\n        \"file_id\": 1,\n        \"title\": \"test_song_title\",\n        \"artist\": null,\n        \"cover\": null,\n        \"duration\": 100\n    }\n]","timestamp":"2025-08-30T13:31:50.089Z"}

@@ -6,10 +6,13 @@
                 <i class="fas fa-arrow-left mr-1"></i>
                 <span>返回</span>
             </button>
+
+            <!-- 刷新按钮 -->
             <button @click="$emit('refresh')" class="btn-refresh">
                 <i class="fas fa-redo mr-1"></i>
             </button>
 
+            <!-- 当前路径 -->
             <div class="path-display">
                 <span class="root-path" @click="$emit('goRoot')">LabMem001:</span>
                 <template v-for="(part, index) in pathPartsRef" :key="index">
@@ -43,7 +46,6 @@
 <script setup lang="ts">
 import { files, disbaleFileItems, isAdding, handleAddSongs, getUserSongs } from '@/storage/cloudstorage';
 import type { FileItem } from '@/types/types';
-import Swal from 'sweetalert2';
 import { computed } from 'vue';
 
 
@@ -129,11 +131,18 @@ const addSongs = async (addFileItems: FileItem[]) => {
     gap: 1rem;
 }
 
-.btn-back,
-.btn-refresh {
+.btn-back, .btn-refresh {
     font-size: 0.875rem;
     color: #2563eb;
     transition: transform 0.1s;
+}
+
+.btn-refresh:hover {
+    transform: scale(0.90) rotate(25deg);
+}
+
+.btn-refresh:active {
+    transform: scale(0.85) rotate(90deg);
 }
 
 .btn-back:hover {
@@ -144,13 +153,6 @@ const addSongs = async (addFileItems: FileItem[]) => {
     transform: scale(0.75);
 }
 
-.btn-refresh:hover {
-    transform: scale(0.90) rotate(25deg);
-}
-
-.btn-refresh:active {
-    transform: scale(0.85) rotate(90deg);
-}
 
 .path-display {
     display: flex;

@@ -5,15 +5,8 @@ import { removeSongBySongID } from "../services/song";
 import fs from "fs";
 import path from "path";
 import { getUploadDir } from "../services/storage";
-
-// songRoutes.ts
-let parseBuffer: typeof import("music-metadata").parseBuffer;
-let fileTypeFromFile: typeof import("file-type").fileTypeFromFile;
-
-(async () => {
-  parseBuffer = (await import("music-metadata")).parseBuffer;
-  fileTypeFromFile = (await import("file-type")).fileTypeFromFile;
-})();
+import { parseBuffer } from "music-metadata"
+import { fileTypeFromFile } from "file-type";
 
 export const songRouter = express.Router();
 
@@ -120,7 +113,7 @@ songRouter.delete('/:song_id', async(req, res) => {
 });
 
 // GET /stream/:song_id
-songRouter.get('/stream/:song_id', async(req, res) => {
+songRouter.get('/stream/:song_id', async(req, res): Promise<any> => {
     const song_id = req.params.song_id;
     if (!song_id || isNaN(Number(song_id))) {
         res.status(400).json({ error: "song_id is required" });
@@ -131,14 +124,17 @@ songRouter.get('/stream/:song_id', async(req, res) => {
         const user_id = req.user!.user_id;
         const song = await SongHandler.getSongByID(Number(song_id));
         if (!song) {
-            res.status(404).json({ error: "Song not found" });
-            return;
+            // Remove song if song not found
+            await SongHandler.removeSongByID(Number(song_id));
+            return res.status(404).json({ error: "Song not found" });
         }
+
         // 检查文件是否存在
         const fullPath = path.posix.join(getUploadDir(), user_id, song.filepath, song.filename);
         if (!fs.existsSync(fullPath)) {
-            res.status(404).json({ error: "File not found" });
-            return;
+            await FileHandler.quicklyRemoveById(song.file_id);
+            console.log(`${song.filename} with file_id: ${song.file_id} has been removed`);
+            return res.status(404).json({ error: "File not found" });
         }
 
         // 获取文件基本信息
