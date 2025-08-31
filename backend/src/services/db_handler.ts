@@ -15,12 +15,13 @@ export const initDB = async (): Promise<Database> => {
         const dbName = process.env.NODE_ENV === 'test' ? "test.db" : "files.db"
         const dbPath = path.resolve(__dirname, `../../data/${dbName}`);
 
-        console.log("Creating DB file ...");
+        logger.info(`Connecting to DB file`);
 
         const newDB = await open({
             filename: dbPath,
             driver: sqlite3.Database,
         });
+
         // Foreign Key contrain
         await newDB.exec("PRAGMA foreign_keys = ON;");
 
@@ -97,8 +98,8 @@ export const initDB = async (): Promise<Database> => {
             );
         `);
 
-        // assign gloabl db
         db = newDB;
+        logger.info(`DB is Connected`);
         return db;
     })();
 
@@ -388,7 +389,10 @@ export const SongHandler = {
     getSongsByUserID: async (user_id: string) => {
         db = await initDB();
         const songs = await db.all<SongRecord[]>(
-            `SELECT *
+            `SELECT s.*,
+                    f.filepath,
+                    f.size,
+                    f.type
              FROM songs s
              JOIN files f ON 
              s.file_id = f.id 
@@ -456,13 +460,11 @@ export const PlayListHandler = {
             // Check existance of playlist_id
             const playlist = await db.get(`SELECT 1 FROM playlists WHERE id = ?`, [playlist_id]);
             if (!playlist) {
-                logger.warn(`Playlist_id: ${playlist_id} does not exist`);
                 throw new Error('Playlist does not exist');
             }
             // Check existance of song_id
             const song = await db.get(`SELECT 1 FROM songs WHERE id = ?`, [song_id]);
             if (!song) {
-                logger.warn(`Song_id: ${song_id} does not exist`);
                 throw new Error('Song does not exist');
             }
 
@@ -473,7 +475,6 @@ export const PlayListHandler = {
             logger.info(`Successfully added ${song_id} to ${playlist_id}`);
             return true;
         } catch (err: any) {
-            logger.error(`Error adding song to playlist: ${err.message}`, { playlist_id, song_id, stack: err.stack });
             throw err;
         }
     },
@@ -498,8 +499,7 @@ export const PlayListHandler = {
              WHERE pe.playlist_id = ?`,
             [playlist_id]
         );
-        logger.debug(`Get songs in playlist_id: ${playlist_id}`);
-        logger.debug(`Songs: ${JSON.stringify(songs, null, 4)}`);
+        logger.debug(`Get songs in playlist_id: ${playlist_id}`, {songs});
 
         return songs;
     },

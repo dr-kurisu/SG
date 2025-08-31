@@ -43,19 +43,19 @@ const removeFiles = async () => {
         Swal.fire({
             icon: 'warning',
             title: '',
-            text: '请选择要删除的文件',
+            text: 'No file is selected',
             showConfirmButton: false,  // 显示确认按钮
             timer: 1000,  // 自动关闭时间
         })
         return;
     }
     const result = await Swal.fire({
-        title: '确认删除',
-        text: `确定要删除 ${selectFileItems.value.length} 个文件吗？`,
+        title: 'Confirmation',
+        text: `Are you sure you want to delete ${selectFileItems.value.length} numbers of files?`,
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: '删除',
-        cancelButtonText: '取消'
+        confirmButtonText: 'Delete',
+        cancelButtonText: 'Cancel'
     });
     // 如果用户点击了确认按钮
     if (result.isConfirmed) {
@@ -87,9 +87,11 @@ const back = () => {
         Swal.fire({
             icon: 'warning',
             title: '',
-            text: '根目录无法回退',
-            showConfirmButton: false,  // 显示确认按钮
-            timer: 1000,  // 自动关闭时间
+            text: 'Already at the root directory',
+            toast: true,
+            position: "top",
+            showConfirmButton: false,
+            timer: 1500,
         })
         return;
     }

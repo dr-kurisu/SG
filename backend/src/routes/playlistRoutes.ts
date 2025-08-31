@@ -1,6 +1,7 @@
 import express from "express";
 import { PlayListHandler, UserHandler } from "../services/db_handler";
 import { Playlist } from "../services/types";
+import logger from "../logger/logger";
 
 export const playlistRouter = express.Router();
 
@@ -66,8 +67,9 @@ playlistRouter.delete('/:playlist_id', async (req, res) => {
 
 // Add song to given playlist
 playlistRouter.put('/:playlist_id/:song_id/add-song', async (req, res): Promise<any> => {
+    let playlist_id, song_id;
     try {
-        const { playlist_id, song_id } = req.params;
+        ({ playlist_id, song_id } = req.params);
         if (!playlist_id || !song_id || isNaN(Number(playlist_id)) || isNaN(Number(song_id))) {
             return res.status(400).json({ error: "Missing required field" });
         }
@@ -77,8 +79,8 @@ playlistRouter.put('/:playlist_id/:song_id/add-song', async (req, res): Promise<
         const result = await PlayListHandler.addSongToPlaylist(Number(playlist_id), Number(song_id));
         if (!result) return res.status(500).json({ error: "Database error" });
         return res.status(201).json({ success: true });
-    } catch (err) {
-        console.error(err);
+    } catch (err: any) {
+        logger.error(`Error adding song to playlist: ${err.message}`, { playlist_id, song_id, stack: err.stack });
         return res.status(500).json({ error: "Internal error" });
     }
 });
@@ -86,9 +88,10 @@ playlistRouter.put('/:playlist_id/:song_id/add-song', async (req, res): Promise<
 // Have not tested
 // Add songs to given playlist
 playlistRouter.put('/:playlist_id/add-songs', async (req, res): Promise<any> => {
+    let user_id, song_ids, playlist_id;
     try {
-        const { playlist_id } = req.params;
-        const { song_ids } = req.body;
+        ({ playlist_id } = req.params);
+        ({ song_ids } = req.body);
 
         if (!playlist_id || isNaN(Number(playlist_id))) {
             return res.status(400).json({ error: "Missing or invalid playlist_id" });
@@ -110,8 +113,8 @@ playlistRouter.put('/:playlist_id/add-songs', async (req, res): Promise<any> => 
         }
 
         return res.status(201).json({ success: true, results });
-    } catch (err) {
-        console.error(err);
+    } catch (err: any) {
+        logger.error(`Fail to add song`, {user_id, playlist_id, song_ids, stack: err.stack});
         return res.status(500).json({ error: "Internal error" });
     }
 });

@@ -1,4 +1,4 @@
-import express, {Request, Response} from "express";
+import express, { Request, Response } from "express";
 import { SongRecord } from "../services/types";
 import { FileHandler, SongHandler } from "../services/db_handler";
 import { removeSongBySongID } from "../services/song";
@@ -7,6 +7,7 @@ import path from "path";
 import { getUploadDir } from "../services/storage";
 import { parseBuffer } from "music-metadata"
 import { fileTypeFromFile } from "file-type";
+import logger from "../logger/logger";
 
 export const songRouter = express.Router();
 
@@ -58,7 +59,7 @@ songRouter.post("/add-song", async (req: Request, res: Response): Promise<any> =
 });
 
 // Get song info
-songRouter.get('/:song_id/get-song', async(req, res) => {
+songRouter.get('/:song_id/get-song', async (req, res) => {
     const song_id = req.params.song_id;
     if (!song_id || isNaN(Number(song_id))) {
         res.status(400).json({ error: "Invalid or missing song_id" });
@@ -72,28 +73,34 @@ songRouter.get('/:song_id/get-song', async(req, res) => {
             return;
         }
         res.status(200).json(song);
-    }catch (err) {
+    } catch (err) {
         console.error("Error fetching song:", err);
         res.status(500).json({ error: "Internal server error" });
     }
 });
 
 // Get songs info by user_id
-songRouter.get('/get-songs', async(req, res): Promise<any> => {
+songRouter.get('/get-songs', async (req, res): Promise<any> => {
     const user_id = req.user?.user_id;
-    if (!user_id) return res.status(401).json({ err: "Unauthorised" });
+    if (!user_id) { 
+        logger.error(`Fail to get user songs since unauthorised access`);
+        return res.status(401).json({ err: "Unauthorised" }); 
+    }
+
+    logger.info(`Attemping to get user_id: ${user_id} songs in /get-songs`);
 
     try {
         const songs = await SongHandler.getSongsByUserID(user_id);
+        logger.debug(`Get songs from user_id: ${user_id}`, {songs});
         return res.status(200).json(songs);
-    } catch (err) {
-        console.error("get-songs error:", err);
+    } catch (err: any) {
+        logger.error(`Error occur when get-songs: ${err.message}`, { user_id, stack: err.stack });
         return res.status(500).json({ err: `Internal Error` })
     }
 });
 
 // DELETE /songs/:song_id
-songRouter.delete('/:song_id', async(req, res) => {
+songRouter.delete('/:song_id', async (req, res) => {
     const song_id = req.params.song_id;
     if (!song_id || isNaN(Number(song_id))) {
         res.status(400).json({ error: "Invalid or missing song_id" });
@@ -102,18 +109,18 @@ songRouter.delete('/:song_id', async(req, res) => {
     try {
         const result = await removeSongBySongID(Number(song_id));
         if (!result) {
-            res.status(404).json({error: "Song not found"});
+            res.status(404).json({ error: "Song not found" });
             return;
         }
         res.sendStatus(200);
-    }catch (err) {
+    } catch (err) {
         console.error(err);
-        res.status(500).json({error: "Internal server error"});
+        res.status(500).json({ error: "Internal server error" });
     }
 });
 
 // GET /stream/:song_id
-songRouter.get('/stream/:song_id', async(req, res): Promise<any> => {
+songRouter.get('/stream/:song_id', async (req, res): Promise<any> => {
     const song_id = req.params.song_id;
     if (!song_id || isNaN(Number(song_id))) {
         res.status(400).json({ error: "song_id is required" });
@@ -132,8 +139,9 @@ songRouter.get('/stream/:song_id', async(req, res): Promise<any> => {
         // 检查文件是否存在
         const fullPath = path.posix.join(getUploadDir(), user_id, song.filepath, song.filename);
         if (!fs.existsSync(fullPath)) {
+            // immediate remove
             await FileHandler.quicklyRemoveById(song.file_id);
-            console.log(`${song.filename} with file_id: ${song.file_id} has been removed`);
+            logger.warn(`${song.filename} with file_id: ${song.file_id} has been removed since file does not exist`);
             return res.status(404).json({ error: "File not found" });
         }
 
@@ -167,8 +175,8 @@ songRouter.get('/stream/:song_id', async(req, res): Promise<any> => {
             res.writeHead(200, head);
             fs.createReadStream(fullPath).pipe(res);
         }
-    } catch (err) {
-        console.error(err);
+    } catch (err: any) {
+        logger.error(err.message, {stack: err.stack});
         res.status(500).json({ error: "Internal server error" });
     }
 });

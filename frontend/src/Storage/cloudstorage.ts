@@ -20,15 +20,15 @@ export const fetchFiles = async (path: string = '/') => {
         // console.log('当前路径:', path, '文件列表:', files.value.map(v => v.name));
     } catch (err: any) {
         if (err.response.status === 401 || err.response.status === 403) {
-            // 想办法跳转
+            // 跳转
             return;
         }
         Swal.fire({
             icon: 'error',
-            title: '错误',
-            text: '获取文件失败，请稍后再试。',
-            showConfirmButton: false,  // 显示确认按钮
-            timer: 1200,  // 自动关闭时间
+            title: 'Fail to fetch files',
+            text: 'Please try again latter',
+            showConfirmButton: false,
+            timer: 1200,
         })
         console.error('获取文件失败:', err);
     }
@@ -40,9 +40,11 @@ export const refresh = async (event: Event) => {
     Swal.fire({
         icon: 'success',
         title: '',
-        text: '刷新成功',
-        showConfirmButton: false,  // 显示确认按钮
-        timer: 1000,  // 自动关闭时间
+        toast: true,
+        text: 'Successfully refreshed',
+        position: "top",
+        showConfirmButton: false,
+        timer: 1000,
     });
 }
 // handling upload of files

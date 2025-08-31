@@ -1,0 +1,38 @@
+2025-08-31T07:37:52.765Z error: Error: Song does not exist
+    at Object.addSongToPlaylist (Z:\SG\backend\src\services\db_handler.ts:464:23)
+    at async <anonymous> (Z:\SG\backend\src\routes\playlistRoutes.ts:111:28)
+2025-08-31T07:38:22.551Z [31merror[39m: Error: Song does not exist
+    at Object.addSongToPlaylist (Z:\SG\backend\src\services\db_handler.ts:464:23)
+    at async <anonymous> (Z:\SG\backend\src\routes\playlistRoutes.ts:111:28)
+[2025-08-31T07:39:57.396Z] [31merror[39m: Fail to add song
+Error: Song does not exist
+    at Object.addSongToPlaylist (Z:\SG\backend\src\services\db_handler.ts:464:23)
+    at async <anonymous> (Z:\SG\backend\src\routes\playlistRoutes.ts:111:28)
+[2025-08-31T07:40:18.374Z] [31MERROR[39M: Fail to add song
+Error: Song does not exist
+    at Object.addSongToPlaylist (Z:\SG\backend\src\services\db_handler.ts:464:23)
+    at async <anonymous> (Z:\SG\backend\src\routes\playlistRoutes.ts:111:28)
+[2025-08-31T07:40:42.966Z] function toUpperCase() { [native code] }: Fail to add song
+Error: Song does not exist
+    at Object.addSongToPlaylist (Z:\SG\backend\src\services\db_handler.ts:464:23)
+    at async <anonymous> (Z:\SG\backend\src\routes\playlistRoutes.ts:111:28)
+[2025-08-31T07:40:53.257Z] [31merror[39m: Fail to add song
+Error: Song does not exist
+    at Object.addSongToPlaylist (Z:\SG\backend\src\services\db_handler.ts:464:23)
+    at async <anonymous> (Z:\SG\backend\src\routes\playlistRoutes.ts:111:28)
+[2025-08-31T07:43:02.697Z] [31MERROR[39M: Fail to add song {"playlist_id":"1","song_ids":[5]}
+Error: Song does not exist
+    at Object.addSongToPlaylist (Z:\SG\backend\src\services\db_handler.ts:464:23)
+    at async <anonymous> (Z:\SG\backend\src\routes\playlistRoutes.ts:111:28)
+[2025-08-31T07:43:58.106Z] ERROR: Fail to add song {"playlist_id":"1","song_ids":[5]}
+Error: Song does not exist
+    at Object.addSongToPlaylist (Z:\SG\backend\src\services\db_handler.ts:464:23)
+    at async <anonymous> (Z:\SG\backend\src\routes\playlistRoutes.ts:111:28)
+[31m[2025-08-31T07:44:25.098Z] ERROR: Fail to add song {"playlist_id":"1","song_ids":[5]}[39m
+[31mError: Song does not exist[39m
+[31m    at Object.addSongToPlaylist (Z:\SG\backend\src\services\db_handler.ts:464:23)[39m
+[31m    at async <anonymous> (Z:\SG\backend\src\routes\playlistRoutes.ts:111:28)[39m
+[31m[2025-08-31T08:15:24.129Z] ERROR: Error occur when get-songs: SQLITE_ERROR: near "FROM": syntax error {[39m
+[31m  "user_id": "admin"[39m
+[31m}[39m
+[31mError: SQLITE_ERROR: near "FROM": syntax error[39m
