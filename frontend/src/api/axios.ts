@@ -25,7 +25,7 @@ instance.interceptors.response.use(
     const url = error.config?.url;
 
     const isLoginRequest = url?.includes('/account/login') || url?.includes('/account/register');
-    console.log(url);
+    // console.log(url);
     if (!isLoginRequest && (status === 401 || status === 403)) {
       localStorage.removeItem('token');
 

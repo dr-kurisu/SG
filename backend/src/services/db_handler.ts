@@ -1,21 +1,32 @@
 import sqlite3 from "sqlite3";
 import { open, Database } from 'sqlite';
-import { FileRecord, MusicRecord, PlayList, PlaylistEntry } from "./types";
+import { FileRecord, Playlist, SongRecord, UserRecord } from "./types";
 import path from "path";
 import bcrypt from "bcryptjs";
+import logger from "../logger/logger"
 
 let db: Database | null = null;
+let dbPromise: Promise<Database> | null = null;
 
 export const initDB = async (): Promise<Database> => {
-    if (!db) {
-        console.log("Creating DB file ...");
+    if (db) return db;
+    if (dbPromise) return await dbPromise; // 正在初始化
+    dbPromise = (async () => {
         const dbName = process.env.NODE_ENV === 'test' ? "test.db" : "files.db"
-        db = await open({
-            filename: path.resolve(__dirname, `../../data/${dbName}`),
+        const dbPath = path.resolve(__dirname, `../../data/${dbName}`);
+
+        logger.info(`Connecting to DB file`);
+
+        const newDB = await open({
+            filename: dbPath,
             driver: sqlite3.Database,
         });
+
+        // Foreign Key contrain
+        await newDB.exec("PRAGMA foreign_keys = ON;");
+
         // Files table
-        await db.exec(`
+        await newDB.exec(`
             CREATE TABLE IF NOT EXISTS files (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 permission INTEGER DEFAULT 0,
@@ -26,51 +37,13 @@ export const initDB = async (): Promise<Database> => {
                 type TEXT,
                 uploaded_time DATETIME DEFAULT CURRENT_TIMESTAMP,
                 created_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-                is_deleted BOOLEAN DEFAULT 0
+                is_deleted BOOLEAN DEFAULT 0,
+                require_password BOOLEAN DEFAULT 0
             );
-        `);
-        // Music table
-        await db.exec(`
-            CREATE TABLE IF NOT EXISTS music (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                file_id INTEGER NOT NULL,
-                artist TEXT,
-                year INTEGER,
-                duration REAL, -- second
-                bitrate INTEGER, -- kbps
-                cover_path TEXT,
-                FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE
-            );            
-        `);
-        // PlayList table
-        await db.exec(`
-            CREATE TABLE IF NOT EXISTS playlist (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id TEXT NOT NULL,
-                name TEXT NOT NULL,
-                description TEXT,
-                cover_path TEXT,
-                created_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-                is_public BOOLEAN DEFAULT 0
-            );  
-        `);
-
-        // Playlist entries
-        await db.exec(`
-            CREATE TABLE IF NOT EXISTS playlistEntries (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                playlist_id INTEGER NOT NULL,
-                music_id INTEGER NOT NULL,
-                position INTEGER NOT NULL, -- 播放列表中的顺序
-                added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (playlist_id) REFERENCES playlist(id) ON DELETE CASCADE,
-                FOREIGN KEY (music_id) REFERENCES music(id) ON DELETE CASCADE,
-                UNIQUE (playlist_id, music_id) -- 防止重复添加同一首歌
-            );  
         `);
 
         // User table
-        await db.exec(`
+        await newDB.exec(`
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id TEXT UNIQUE NOT NULL,
@@ -82,14 +55,67 @@ export const initDB = async (): Promise<Database> => {
 
         // Insert admin
         const passwordHash = await bcrypt.hash("admin", 10);
-        await db.run(`
-            INSERT INTO users (user_id, username, password, permission)
+        await newDB.run(`
+            INSERT OR IGNORE INTO users (user_id, username, password, permission)
             VALUES (?, ?, ?, ?)`,
             ["admin", "admin", passwordHash, 999]
         );
-    }
-    return db;
+
+
+        // Song table
+        await newDB.run(`
+            CREATE TABLE IF NOT EXISTS songs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                file_id INTEGER NOT NULL UNIQUE,
+                title TEXT NOT NULL,
+                artist TEXT,
+                cover TEXT,
+                duration INTEGER NOT NULL,             -- second
+                FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE
+            );`
+        );
+
+        // Playlist table
+        await newDB.run(`
+            CREATE TABLE IF NOT EXISTS playlists (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                description TEXT,
+                cover TEXT
+            );`
+        );
+
+        // Playlist entries table
+        await newDB.run(`
+            CREATE TABLE IF NOT EXISTS playlistEntries (
+                playlist_id INTEGER NOT NULL,
+                song_id INTEGER NOT NULL,
+                PRIMARY KEY (playlist_id, song_id),
+                FOREIGN KEY (playlist_id) REFERENCES playlists(id) ON DELETE CASCADE,
+                FOREIGN KEY (song_id) REFERENCES songs(id) ON DELETE CASCADE
+            );
+        `);
+
+        db = newDB;
+        logger.info(`DB is Connected`);
+        return db;
+    })();
+
+    if (!dbPromise) throw Error("Invalid db promise");
+
+    return await dbPromise;
 };
+
+export async function disconnectDB() {
+    if (db) {
+        await db.close();
+        db = null;
+        dbPromise = null;
+        console.log('Database connection closed');
+    }
+}
 
 export const FileHandler = {
     insert: async (file: FileRecord): Promise<number> => {
@@ -104,19 +130,8 @@ export const FileHandler = {
                 throw new Error('Insert failed. No lastID return');
             }
             return result.lastID;
-        }catch (error) {
-            // classify errors
-            if (error instanceof Error) {
-                if (error.message.includes('SQLITE_CONSTRAINT: FOREIGN KEY')) {
-                    throw new Error(`数据库外键约束错误: ${error.message}`);
-                }
-                if (error.message.includes('SQLITE_CONSTRAINT: UNIQUE')) {
-                    throw new Error(`数据重复: ${error.message}`);
-                }
-            }
-            
-            console.error('插入文件失败:', error);
-            throw new Error(`文件插入失败: ${error instanceof Error ? error.message : String(error)}`);
+        } catch (err) {
+            handleInsertionSQLError(err);
         }
     },
 
@@ -139,8 +154,8 @@ export const FileHandler = {
         return file;
     },
     //更新权限byId
-    updatePermissionById: async(id: number, user_id:string, permission: number): Promise<Boolean> =>{
-        db =await initDB();
+    updatePermissionById: async (id: number, user_id: string, permission: number): Promise<Boolean> => {
+        db = await initDB();
         await db.run(`
             UPDATE files SET permission = ?
             WHERE user_id = ? AND
@@ -148,12 +163,12 @@ export const FileHandler = {
             [permission, user_id, id]
         );
         //1.更改的permission不能大于current permission
-        
-        //2.更改的permission不能为负数
+
+        //2.更改的permission不能最小是0
         return true;
     },
 
-    
+
     // Given path return files in query path
     getFilesByPath: async (user_id: string, queryPath: string): Promise<FileRecord[]> => {
         db = await initDB();
@@ -190,6 +205,12 @@ export const FileHandler = {
         await db.run(`UPDATE files SET is_deleted = 1 WHERE id = ?`, [id]);
     },
 
+    // Enforce remove file by id
+    quicklyRemoveById: async (id: number): Promise<void> => {
+        const db = await initDB();
+        await db.run(`DELETE FROM files WHERE id = ?`, [id]);
+    },
+
     // 删除文件By Given start path
     removeByStartPath: async (startPath: string, user_id: string): Promise<void> => {
         console.log(`Removing files with start path: ${startPath} for user: ${user_id}`);
@@ -197,269 +218,316 @@ export const FileHandler = {
         await db.run(`
             UPDATE files 
             SET is_deleted = 1 
-            WHERE filepath LIKE ? AND user_id = ?`, 
+            WHERE filepath LIKE ? AND user_id = ?`,
             [`${startPath}%`, user_id]
+        );
+    },
+
+    // 更新是否为加密文件夹
+    updateRequirePassword: async (id: number, newValue: boolean) => {
+        db = await initDB();
+        await db.run(`
+            UPDATE files
+            SET require_password = ?
+            WHERE id = ?`,
+            [newValue, id]
         );
     },
 };
 
-
-export const MusicHandler = {
-    insert: async (musicRecord: MusicRecord): Promise<number> => {
-        db = await initDB();
-
+export const UserHandler = {
+    // 插入用户record
+    insert: async (user_id: string, username: string, password: string, permission: number) => {
+        const db = await initDB();
         try {
-            // 检查关联的file是否存在
-            const fileExists = await db.get(
-                'SELECT 1 FROM files WHERE id = ?', 
-                [musicRecord.file_id]
+            const result = await db.run(
+                `INSERT INTO users (user_id, username, password, permission)
+            VALUES (?, ?, ?, ?)`,
+                [user_id, username, password, permission]
             );
-            
-            if (!fileExists) {
-                throw new Error(`关联的文件记录不存在 (file_id: ${musicRecord.file_id})`);
+            if (!result.lastID) {
+                throw new Error('Insert failed. No lastID returned');
             }
+            return result.lastID;
+        } catch (err) {
+            handleInsertionSQLError(err);
+        }
+    },
 
-            const result = await db.run(`
-                INSERT INTO music (file_id, artist, year, duration, bitrate, cover_path) 
-                VALUES (?, ?, ?, ?, ?, ?);`
-                , [
-                    musicRecord.file_id,
-                    musicRecord.artist, 
-                    musicRecord.year, 
-                    musicRecord.duration,
-                    musicRecord.bitrate,
-                    musicRecord.cover_path
-                ]
+    // 移除用户record by username
+    removeUserByUserID: async (user_id: string) => {
+        const db = await initDB();
+        const result = await db.run(`DELETE FROM users WHERE user_id = ?`, [user_id]);
+        return result.changes! > 0;
+    },
+
+    // 更新用户权限
+    updateUserPermission: async (user_id: string, permission: number) => {
+        const db = await initDB();
+        const result = await db.run(
+            `UPDATE users SET permission = ? WHERE user_id = ?`,
+            [permission, user_id]
+        );
+        return result.changes! > 0;
+    },
+
+    // 更新用户密码
+    updateUserPassword: async (user_id: string, newPassword: string) => {
+        const db = await initDB();
+        const result = await db.run(
+            `UPDATE users SET password = ? WHERE user_id = ?`,
+            [newPassword, user_id]
+        );
+        return result.changes! > 0;
+    },
+
+    // 更新用户名
+    updateUsername: async (user_id: string, newUsername: string) => {
+        const db = await initDB();
+        try {
+            const result = await db.run(
+                `UPDATE users SET username = ? WHERE user_id = ?`,
+                [newUsername, user_id]
             );
+            return result.changes! > 0;
+        } catch (error) {
+            if (error instanceof Error && error.message.includes('SQLITE_CONSTRAINT: UNIQUE')) {
+                throw new Error(`用户名已存在: ${error.message}`);
+            }
+            throw error;
+        }
+    },
 
+    // 更新用户ID
+    updateUserID: async (oldUserID: string, newUserID: string) => {
+        const db = await initDB();
+        try {
+            const result = await db.run(
+                `UPDATE users SET user_id = ? WHERE user_id = ?`,
+                [newUserID, oldUserID]
+            );
+            return result.changes! > 0;
+        } catch (error) {
+            if (error instanceof Error && error.message.includes('SQLITE_CONSTRAINT: UNIQUE')) {
+                throw new Error(`user_id 已存在: ${error.message}`);
+            }
+            throw error;
+        }
+    },
+
+    // 获取用户 by user_id
+    getUserByUserID: async (user_id: string) => {
+        const db = await initDB();
+        const user = await db.get<UserRecord>(
+            `SELECT * FROM users WHERE user_id = ?;`,
+            [user_id]
+        );
+        return user || null;
+    },
+
+    getUserByUsername: async (username: string) => {
+        const db = await initDB();
+        const user = await db.get<UserRecord>(
+            `SELECT * FROM users WHERE username = ?;`,
+            [username]
+        );
+        return user || null;
+    },
+
+    // 验证用户密码
+    verifyUser: async (username: string, password: string) => {
+        const db = await initDB();
+        const user = await db.get(
+            `SELECT * FROM users WHERE username = ?`,
+            [username]
+        );
+        if (!user) return null;
+        return await bcrypt.compare(password, user.password);
+    }
+};
+
+export const SongHandler = {
+    // Insert song
+    insert: async (song: SongRecord) => {
+        db = await initDB();
+        try {
+            const result = await db.run(
+                `INSERT INTO songs (file_id, title, artist, cover, duration)
+                 VALUES (?, ?, ?, ?, ?)`,
+                [song.file_id, song.title, song.artist ?? null, song.cover ?? null, song.duration]
+            );
             if (!result.lastID) {
                 throw new Error('Insert failed. No lastID return');
-            };
-
-            return result.lastID;
-        }catch (error) {
-            // classify errors
-            if (error instanceof Error) {
-                if (error.message.includes('SQLITE_CONSTRAINT: FOREIGN KEY')) {
-                    throw new Error(`数据库外键约束错误: ${error.message}`);
-                }
-                if (error.message.includes('SQLITE_CONSTRAINT: UNIQUE')) {
-                    throw new Error(`数据重复: ${error.message}`);
-                }
             }
-            
-            console.error('插入音乐记录失败:', error);
-            throw new Error(`音乐记录插入失败: ${error instanceof Error ? error.message : String(error)}`);
+            return result.lastID;
+        } catch (err) {
+            handleInsertionSQLError(err);
         }
     },
 
-    getAll: async (): Promise<MusicRecord[]> => {
+    // Get songRecord by song_id
+    getSongByID: async (song_id: number) => {
         db = await initDB();
-        const files = await db.all<MusicRecord[]>(`
-            SELECT 
-                f.*,
-                m.*
-            FROM music m 
-            JOIN files f ON m.file_id = f.id
-            WHERE f.is_deleted = 0 
-            ORDER BY f.uploaded_time DESC  
-        `);
-        return files;
+        const song = await db.get<SongRecord>(`
+            SELECT * FROM songs s JOIN files f ON s.file_id = f.id WHERE s.id = ?;`,
+            [song_id]
+        );
+        return song || null;
     },
 
-    getByFileId: async (file_id: number, user_id: string): Promise<MusicRecord | undefined> => {
+    // Get song by file_id
+    getSongByFileID: async (file_id: number) => {
         db = await initDB();
+        const song = await db.get<SongRecord>(
+            `SELECT * FROM songs s JOIN files f ON s.file_id = f.id WHERE s.file_id = ?;`,
+            [file_id]
+        );
+        return song || null;
+    },
+
+    // Get songs by user_id (have not tested)
+    getSongsByUserID: async (user_id: string) => {
+        db = await initDB();
+        const songs = await db.all<SongRecord[]>(
+            `SELECT s.*,
+                    f.filepath,
+                    f.size,
+                    f.type
+             FROM songs s
+             JOIN files f ON 
+             s.file_id = f.id 
+             WHERE f.user_id = ?`,
+            [user_id]
+        );
+        return songs;
+    },
+
+    // Remove songRecord by song_id
+    removeSongByID: async (song_id: number) => {
+        db = await initDB();
+        const result = await db.run(`DELETE FROM songs WHERE id = ?;`, [song_id]);
+        return result.changes! > 0;
+    },
+}
+
+export const PlayListHandler = {
+    // Create playlist
+    createPlaylist: async (playlist: Playlist) => {
+        db = await initDB();
+        const result = await db.run(`
+            INSERT INTO playlists (name, user_id, description, cover)
+            VALUES (?, ?, ?, ?);`,
+            [playlist.name, playlist.user_id, playlist.description ?? null, playlist.cover ?? null]
+        );
+        if (!result.lastID) throw new Error(`Fail to create playlist ${playlist.name}`);
+        return result.lastID!;
+    },
+
+    // Get playlist by user_id
+    getPlaylistsByUserID: async (user_id: string) => {
+        db = await initDB();
+        const playlists = await db.all<Playlist[]>(`
+            SELECT * FROM playlists WHERE user_id = ? ORDER BY created_at DESC`,
+            [user_id]
+        );
+        return playlists;
+    },
+
+    getPlaylistByID: async (playlist_id: number) => {
+        db = await initDB();
+        const result = await db.get<Playlist>(`
+            SELECT * FROM playlists WHERE id =  ?;`,
+            [playlist_id]
+        );
+        return result ?? null;
+    },
+
+    // Remove playlist by playlist_id
+    removePlaylistByID: async (playlist_id: number) => {
+        db = await initDB();
+        const result = await db.run(
+            `DELETE FROM playlists WHERE id = ?`,
+            [playlist_id]
+        );
+        return result.changes! > 0;
+    },
+
+    // Add song to a playlist
+    addSongToPlaylist: async (playlist_id: number, song_id: number) => {
+        db = await initDB();
+        logger.debug(`Attempting to add song_id: ${song_id} to playlist_id: ${playlist_id}`);
         try {
-            const file = await db.get<MusicRecord>(`
-                SELECT * FROM music m 
-                JOIN files f ON f.id = m.file_id
-                WHERE f.id = ? AND f.user_id = ?
-                `,
-                [file_id, user_id]
+            // Check existance of playlist_id
+            const playlist = await db.get(`SELECT 1 FROM playlists WHERE id = ?`, [playlist_id]);
+            if (!playlist) {
+                throw new Error('Playlist does not exist');
+            }
+            // Check existance of song_id
+            const song = await db.get(`SELECT 1 FROM songs WHERE id = ?`, [song_id]);
+            if (!song) {
+                throw new Error('Song does not exist');
+            }
+
+            await db.run(
+                `INSERT OR IGNORE INTO playlistEntries (playlist_id, song_id) VALUES (?, ?)`,
+                [playlist_id, song_id]
             );
-            return file || undefined;
-        }catch (error) {
-            console.error(`Error fetched music record for ${file_id}`, error);
-            return undefined;
+            logger.info(`Successfully added ${song_id} to ${playlist_id}`);
+            return true;
+        } catch (err: any) {
+            throw err;
         }
-
     },
 
-    // Given path return music in query path
-    getMusicByPath: async (user_id: string, queryPath: string): Promise<MusicRecord[]> => {
+    // Remove song from playlist
+    removeSongFromPlaylist: async (playlist_id: number, song_id: number) => {
         db = await initDB();
-        const music = await db.all<MusicRecord[]>(`
-            SELECT * FROM music m
-            JOIN files f ON f.id = m.file_id
-            WHERE f.user_id = ? AND 
-            f.filepath = ? AND f.is_deleted = 0 
-            ORDER BY f.uploaded_time DESC`,
-            [user_id, queryPath]
+        const result = await db.run(
+            `DELETE FROM playlistEntries WHERE playlist_id = ? AND song_id = ?`,
+            [playlist_id, song_id]
         );
-        return music;
+        return result.changes! > 0;
     },
 
-    getMusicByFileID: async (user_id: string, file_id: number): Promise<MusicRecord | undefined> => {
+    // Get songs by playlist_id
+    getSongsByPlaylistID: async (playlist_id: number) => {
         db = await initDB();
-        const music = await db.get<MusicRecord>(`
-            SELECT * FROM music m
-            JOIN files f ON f.id = m.file_id
-            WHERE f.user_id = ? AND
-            f.id = ? AND
-            f.is_deleted = 0`,
-            [user_id, file_id]
+        const songs = await db.all<SongRecord[]>(
+            `SELECT s.*
+             FROM songs s
+             JOIN playlistEntries pe ON s.id = pe.song_id
+             WHERE pe.playlist_id = ?`,
+            [playlist_id]
         );
-        return music;
+        logger.debug(`Get songs in playlist_id: ${playlist_id}`, {songs});
+
+        return songs;
+    },
+
+    // 判断歌曲是否在playlist里
+    isSongInPlaylist: async (playlist_id: number, song_id: number) => {
+        db = await initDB();
+        const result = await db.get(
+            `SELECT 1 FROM playlistEntries WHERE playlist_id = ? AND song_id = ?`,
+            [playlist_id, song_id]
+        );
+        return !!result;
     }
 }
 
 
-export const PlayListHandler = {
-    getPlayListsByUserID: async (user_id: string): Promise<PlayList[] | []> => {
-        db = await initDB();
-        const playLists = await db.all<PlayList[]>(`
-            SELECT * FROM playlist
-            WHERE user_id = ?
-            ORDER BY created_time DESC`, 
-            [user_id]
-        );
-        return playLists;
-    },
-
-    getPlayListByID: async (id: number, user_id: string): Promise<PlayList | undefined> => {
-        db = await initDB();
-        const playList = await db.get<PlayList>(`
-            SELECT * FROM playlist
-            WHERE user_id = ? AND
-            id = ?`,
-            [user_id, id]
-        );
-        return playList;
-    },
-
-    insertPlayList: async (playList: PlayList): Promise<number> => {
-        db = await initDB();
-        const result = await db.run(`
-            INSERT INTO playlist (user_id, name, description, cover_path)
-            VALUES (?, ?, ?, ?);    `,
-            [playList.user_id, playList.name, playList.description, playList.cover_path]
-        );
-        if (!result.lastID) {
-            throw new Error("Insert failed. No last ID return in playList insertion");
+function handleInsertionSQLError(error: unknown): never {
+    if (error instanceof Error) {
+        if (error.message.includes('SQLITE_CONSTRAINT: FOREIGN KEY')) {
+            logger.error(`数据库外键约束错误 ${error.message}`, {stack: error.stack});
+            throw new Error(`数据库外键约束错误: ${error.message}`);
         }
-        return result.lastID;
-    },
-
-    removePlayListByID: async (id: number, user_id: string): Promise<boolean> => {
-        db = await initDB();
-        try {
-            await db.run(`
-                DELETE FROM playlist
-                WHERE id = ? AND
-                user_id = ?
-            `, [id, user_id]);
-            return true;
-        } catch(error) {
-            console.error(error);
-            return false;
+        if (error.message.includes('SQLITE_CONSTRAINT: UNIQUE')) {
+            logger.error(`数据不唯一 ${error.message}`, {stack: error.stack});
+            throw new Error(`数据不唯一: ${error.message}`);
         }
 
     }
-};
-
-
-export const PlayListEntryHandler = {
-    getEntriesByPlayListID: async (playListID: number, user_id: string): Promise<PlaylistEntry[] | []> => {
-        db = await initDB();
-        try {
-            const playListEntries = await db.all<PlaylistEntry[]>(`
-                SELECT * FROM playlistEntries e
-                JOIN playlist p ON e.playlist_id = p.id
-                WHERE p.user_id = ? AND
-                e.playlist_id = ?;`,
-                [user_id, playListID]
-            );
-            return playListEntries;
-        }catch (error) {
-            throw new Error(`Fail to get playList entry with ID: ${playListID} and userID: ${user_id}`);
-        }
-    },
-
-    insertEntryByPlayListID: async (user_id: string, entry: PlaylistEntry): Promise<number | null> => {
-        db = await initDB();
-
-        const playlist_id = entry.playlist_id;
-
-        // Checking playlist exist
-        try {
-            const playlist = await db.get<{ id: number }>(`
-                SELECT id FROM playlist
-                WHERE id = ? AND user_id = ?;
-            `, [playlist_id, user_id]
-            );
-
-            if (!playlist) {
-                throw new Error(`Unauthorized: playlist ${playlist_id} not found for user ${user_id}`);
-            }
-        } catch(error) {
-            console.error(`Unauthorized: playlist ${playlist_id}`, error);
-            return null;
-        }
-
-        // Get max position
-
-        const row = await db.get<{ 'MAX(position)': number | null }>(`
-        SELECT MAX(position) FROM playlistEntries
-        WHERE playlist_id = ?;
-        `, [playlist_id]);
-
-        const maxPosition = row?.['MAX(position)'] ?? -1;
-        const nextPosition = maxPosition + 1;
-        console.log(`NextPosition: ${nextPosition}`);
-
-        // Insert record
-        try {
-            const result = await db.run(`
-                INSERT INTO playlistEntries (playlist_id, music_id, position) 
-                VALUES (?, ?, ?);`,
-                [playlist_id, entry.music_id, nextPosition]
-            );
-            return result.lastID!;
-        } catch(error) {
-            console.error(`Failed to insert playlist entry: `, error);
-            throw error;
-        }
-    },
-
-    removeEntryByPlayListIDByEntryID: async (
-        user_id: string,
-        playlist_id: number,
-        entry_id: number
-    ): Promise<boolean> => {
-        db = await initDB();
-        try {
-            const playlist = await db.get<{ id: number }>(`
-            SELECT id FROM playlist
-            WHERE id = ? AND user_id = ?;
-            `, [playlist_id, user_id]);
-
-            if (!playlist) {
-                throw new Error(`Unauthorized: playlist ${playlist_id} not found for user ${user_id}`);
-            }
-
-            // 执行删除
-            const result = await db.run(`
-                DELETE FROM playlistEntries
-                WHERE id = ? AND playlist_id = ?;
-                `, [entry_id, playlist_id]
-            );
-            
-            if (!result || !result.changes) throw new Error("Fail to delete entry");
-            return result.changes > 0;
-        } catch (error) {
-            console.error(`Failed to delete entry ${entry_id} from playlist ${playlist_id}`, error);
-            throw error;
-        }
-    }
-
+    logger.error(`Fail to insert ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(`Fail to insert: ${error instanceof Error ? error.message : String(error)}`);
 }

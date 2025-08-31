@@ -14,9 +14,20 @@ declare global {
 const whitelist = ['/api/account/login', '/api/account/register'];
 
 const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
-  if (whitelist.includes(req.path) || process.env.NODE_ENV==="development") {
+  if (process.env.NODE_ENV==="development") {
+    req.user = { user_id: 'admin' };
     return next();
   }
+
+  if (whitelist.includes(req.path)) {
+    return next();
+  }
+
+  if (process.env.NODE_ENV === "test") {
+    req.user = { user_id: 'test_user' };
+    return next();
+  }
+
   const authHeader = req.headers['authorization'];
   const token = authHeader?.split(' ')[1]; // Bearer <token>
 

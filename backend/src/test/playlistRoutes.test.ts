@@ -1,103 +1,105 @@
-import request from "supertest"
-import express from "express"
-import playlistRouter from "../routes/playlistRoutes"
-import { getAllPlaylist, getEntriesByPlayListID, insertEntryByPlayListID, removePlaylist } from "../services/music";
-
-
-import { PlayList } from '../services/types';
-
-
-jest.mock("../services/music", () => ({
-  getAllPlaylist: jest.fn(),
-  removePlaylist: jest.fn(),
-  getEntriesByPlayListID: jest.fn(),
-  insertEntryByPlayListID: jest.fn(),
-  removeEntryByPlayListIDByEntryID: jest.fn(),
-}));
-
-// 引用 mock 函数
-const mockedGetAllPlaylist = getAllPlaylist as jest.Mock;
-const mockedGetEntries = getEntriesByPlayListID as jest.Mock;
-const mockedInsertEntry = insertEntryByPlayListID as jest.Mock;
-const mockedRemovePlaylist = removePlaylist as jest.Mock;
-
-
-const mockPlaylists: PlayList[] = [
-  {
-    id: 1,
-    user_id: "admin",
-    name: "安静的音乐",
-    description: "A playlist for testing music.",
-    cover_path: null,
-    created_time: "2025-06-16T12:00:00Z",
-    is_public: true,
-  },
-  {
-    id: 2,
-    user_id: "admin",
-    name: "Workout !!!",
-    description: null,
-    cover_path: null,
-    created_time: "2025-06-15T08:30:00Z",
-    is_public: false,
-  },
-];
-
-const mockPlaylistEntries = [
-    {
-        id: 1,
-        playlist_id: 2,
-        music_id: 4,
-        position: 0,
-        added_at: "2025-06-16T12:00:00Z",
-    },
-
-    {
-        id: 2,
-        playlist_id: 2,
-        music_id: 6,
-        position: 1,
-        added_at: "2025-06-16T12:00:00Z",
-    }
-]
-
-beforeEach(() => {
-  mockedGetAllPlaylist.mockResolvedValue(mockPlaylists);
-  mockedGetEntries.mockResolvedValue(mockPlaylistEntries);
-  mockedInsertEntry.mockResolvedValue(3);
-  mockedRemovePlaylist.mockResolvedValue(true);
-});
-
+import request from 'supertest';
+import express from 'express';
+import { playlistRouter } from "../routes/playlistRoutes";
+import authenticateToken from "../middlerware/authToken";
+import { examplePlaylistRecord } from "./exampleRecord";
+import { PlayListHandler } from '../services/db_handler';
 
 const app = express();
+
 app.use(express.json());
-app.use("/api/playlist", playlistRouter);
+app.use(authenticateToken);
+app.use("/playlist", playlistRouter);
 
-
-// describe
-describe("Playlist API", () => {
-    it("GET /api/playlist/getAllPlaylists - should return all playlists", async () => {
-        const res = await request(app).get("/api/playlist/getAllPlaylists");
-        expect(res.status).toBe(200);
-        expect(res.body).toEqual(mockPlaylists);
+describe("POST /playlist/add", () => {
+    afterEach(() => {
+        jest.resetAllMocks();
+    })
+    test("should return 400 if missing required field", async () => {
+        const res = await request(app).post("/playlist/add");
+        expect(res.status).toBe(400);
     });
 
-    it("GET /api/playlist/2/entries - should return playlist entries", async () => {
-        const res = await request(app).get("/api/playlist/2/entries");
-        expect(res.status).toBe(200);
-        expect(res.body).toEqual(mockPlaylistEntries);
+    test("should return 500 if has internal error", async () => {
+        const originalError = console.error;
+        console.error = () => { };
+        jest.spyOn(PlayListHandler, "createPlaylist").mockImplementation(() => {
+            throw new Error("Database error");
+        });
+        const res = await request(app).post("/playlist/add").send(examplePlaylistRecord);
+        console.error = originalError;
+        expect(res.status).toBe(500);
     });
 
-    it("POST /api/playlist/2/music/6 - should insert entry and return entry_id", async () => {
-        const res = await request(app).post("/api/playlist/2/music/6");
+    test("should return 201 if successfully changed", async () => {
+        jest.spyOn(PlayListHandler, "createPlaylist").mockResolvedValue(1);
+        const res = await request(app).post("/playlist/add").send(examplePlaylistRecord);
         expect(res.status).toBe(201);
-        expect(res.body).toEqual({ entry_id: 3 });
     });
+});
 
-    it("DELETE /api/playlist/1 - should delete a playlist", async () => {
-        const res = await request(app).delete("/api/playlist/1");
-        expect(res.status).toBe(200);
-        expect(res.body).toEqual({ success: true });
+describe("DELETE /playlist/:playlist_id", () => {
+    beforeEach(() => {
+        jest.resetAllMocks();
     });
+    test("should return 400 if invalid playlist_id", async() => {
+        const res = await request(app).delete("/playlist/NotANumber");
+        expect(res.status).toBe(400);
+    });
+    test("should return 401 if user_id not match", async() => {
+        jest.spyOn(PlayListHandler, "getPlaylistByID").mockResolvedValue({ 
+            user_id: "random_user_id",
+            name: "test_playlist",
+            description: null,
+            cover: null
+        });
+        const res = await request(app).delete("/playlist/1");
+        expect(res.status).toBe(401);
+        expect(res.body.error).toMatch(/permission/i);
+    });
+    test("should return 500 if result is false", async() => {
+        jest.spyOn(PlayListHandler, "getPlaylistByID").mockResolvedValue({ 
+            user_id: "test_user",
+            name: "test_playlist",
+            description: null,
+            cover: null
+        });
+        jest.spyOn(PlayListHandler, "removePlaylistByID").mockResolvedValue(false);
+        const res = await request(app).delete("/playlist/1");
+        expect(res.status).toBe(500);
+        expect(res.body.error).toMatch(/Database/i);
+    });
+    test("should return 500 if has internal error", async() => {
+        jest.spyOn(PlayListHandler, "getPlaylistByID").mockImplementation(() => {
+            throw new Error("Database error");
+        });
+        const originalError = console.error;
+        console.error = () => { };
+        const res = await request(app).delete("/playlist/1");
+        expect(res.status).toBe(500);
+        console.error = originalError;
+    });
+    test("should return 204 if successful deleted", async() => {
+        jest.spyOn(PlayListHandler, "getPlaylistByID").mockResolvedValue({ 
+            user_id: "test_user",
+            name: "test_playlist",
+            description: null,
+            cover: null
+        });
+        jest.spyOn(PlayListHandler, "removePlaylistByID").mockResolvedValue(true);
+        const res = await request(app).delete("/playlist/1");
+        expect(res.status).toBe(204);
+    });
+});
+
+describe("GET /playlist/", () => {
+
+});
+
+describe("PUT /playlist/:playlist_id/:song_id/add-song", () => {
+
+});
+
+describe("DELETE /playlist/:playlist_id/:song_id", () => {
 
 });

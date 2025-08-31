@@ -1,7 +1,8 @@
 import express, { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { UserHandler } from "../services/userModel";
+import { UserHandler } from "../services/db_handler";
+import { v4 as uuidv4 } from 'uuid';
 
 const accountRouter = express.Router();
 
@@ -17,7 +18,8 @@ accountRouter.post("/login", async (req: Request, res: Response) => {
   }
 
   // 调用对应函数查找用户
-  const user_id = await UserHandler.checkUser(username);
+  const user = await UserHandler.getUserByUsername(username);
+  const user_id = user?.user_id;
 
   if (!user_id) {
     res.status(401).json({ message: "User does not exist" });
@@ -44,7 +46,7 @@ accountRouter.post("/login", async (req: Request, res: Response) => {
   res.status(200).json({ 
     token,
     user: {
-      id: user_id,
+      user_id: user_id,
       username,
     }
   });
@@ -59,14 +61,15 @@ accountRouter.post("/register", async (req: Request, res: Response) => {
     return;
   }
   // 查看用户是否已经存在
-  const user_id = await UserHandler.checkUser(username);
-  if (user_id) {
+  const user = await UserHandler.getUserByUsername(username);
+  if (user) {
     res.status(401).json({message: "User already exist"});
     return;
   }
   // 数据库注入用户信息
   const passwordHash = await bcrypt.hash(password, 10);
-  const id = await UserHandler.insertUser(username, passwordHash);
+  const user_id = uuidv4();
+  const id = await UserHandler.insert(user_id, username, passwordHash, 1);
   if (id) {
     res.status(201).json({ message: "Successfully registered user"});
     return;

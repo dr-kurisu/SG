@@ -1,21 +1,17 @@
 import express from 'express';
 import cors from 'cors';
-import path from 'path';
 
 import storageRouter from './storageRoutes';
-import musicRouter from './musicRoutes';
-import previewRouter from './previewRoutes';
-import { clearDirectory, clearDatabase } from '../services/utili';
-import { scanDirectory } from '../services/utili';
 import accountRouter from './accountRoutes';
 import authenticateToken from '../middlerware/authToken';
-// import diaryRouter from './diary';
+import { songRouter } from './songRoutes';
+import { playlistRouter } from './playlistRoutes';
 
 
 
 const initializeDevEnvironment = async () => {
-  await clearDatabase();
-  await scanDirectory("/");
+  // await clearDatabase();
+  // await scanDirectory("/");
   console.log("dev env initialized.");
 };
 
@@ -36,9 +32,8 @@ const initializeDevEnvironment = async () => {
   app.use(authenticateToken);
 
   app.use('/api', storageRouter);
-  app.use('/api/preview', previewRouter);
-  app.use('/api/music', musicRouter);
-  app.use('/music', express.static(path.posix.join(__dirname, '../uploads/Music')));
+  app.use('/api/songs', songRouter);
+  app.use('/api/playlist', playlistRouter);
 
   app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);

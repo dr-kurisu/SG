@@ -1,59 +1,203 @@
-import express, { Request, Response } from "express";
-import {
-  getAllPlaylist,
-  removePlaylist,
-  getEntriesByPlayListID,
-  insertEntryByPlayListID,
-  removeEntryByPlayListIDByEntryID,
-} from "../services/music";
+import express from "express";
+import { PlayListHandler, UserHandler } from "../services/db_handler";
+import { Playlist } from "../services/types";
+import logger from "../logger/logger";
 
-const playlistRouter = express.Router();
+export const playlistRouter = express.Router();
 
-// 获取用户所有 playlist
-playlistRouter.get("/getAllPlaylists", async (req: Request, res: Response) => {
-  const user_id = "admin";
-  const playlists = await getAllPlaylist(user_id);
-  res.status(200).json(playlists);
+// Add new playlist
+playlistRouter.post('/add', async (req, res) => {
+    try {
+        const user_id: string = req.user?.user_id;
+        if (!user_id) {
+            res.status(401).json({ error: "Missing user_id" });
+        }
+
+        const playlist: Playlist = req.body;
+
+        if (!playlist || !playlist.name) {
+            res.status(400).json({ error: "Missing required fields" });
+            return;
+        }
+
+        playlist.user_id = user_id;
+
+        const playlist_id = await PlayListHandler.createPlaylist(playlist);
+
+        if (isNaN(Number(playlist_id))) {
+            throw new Error("playlist_id not valid");
+        }
+        res.status(201).json({ success: true, playlist_id });
+    } catch (err) {
+        console.error("Failed to add new playlist:", err);
+        res.status(500).json({ error: "Failed to add playlist" });
+    }
 });
 
-// 删除 playlist
-playlistRouter.delete("/:playlist_id", async (req: Request, res: Response) => {
-  const user_id = "admin";
-  const { playlist_id } = req.params;
-  const result = await removePlaylist(Number(playlist_id), user_id);
-  res.status(200).json({ success: result });
+
+// remove playlist
+playlistRouter.delete('/:playlist_id', async (req, res) => {
+    try {
+        const user_id = req.user!.user_id;
+        const playlist_id = req.params.playlist_id;
+        if (!playlist_id || isNaN(Number(playlist_id))) {
+            res.status(400).json({ error: "Missing required fields" });
+            return;
+        }
+
+        const playlist = await PlayListHandler.getPlaylistByID(Number(playlist_id));
+        // 权限判定
+        if (playlist?.user_id !== user_id) {
+            res.status(401).json({ error: "User_id not match do not have permission to delete playlist" });
+            return;
+        } 
+
+        const result = await PlayListHandler.removePlaylistByID(Number(playlist_id));
+        if (!result) {
+            res.status(500).json({ error: "Database error, may not exist" });
+            return;
+        } else {
+            res.status(204).json({ success: true });
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Fail to remove playlist" });
+    }
 });
 
-// 获取 playlist 的所有 entries
-playlistRouter.get("/:playlist_id/entries", async (req: Request, res: Response) => {
-  const user_id = "admin";
-  const { playlist_id } = req.params;
-  const entries = await getEntriesByPlayListID(Number(playlist_id), user_id);
-  res.status(200).json(entries);
+// Add song to given playlist
+playlistRouter.put('/:playlist_id/:song_id/add-song', async (req, res): Promise<any> => {
+    let playlist_id, song_id;
+    try {
+        ({ playlist_id, song_id } = req.params);
+        if (!playlist_id || !song_id || isNaN(Number(playlist_id)) || isNaN(Number(song_id))) {
+            return res.status(400).json({ error: "Missing required field" });
+        }
+        const user_id = req.user?.user_id;
+        if (!user_id) return res.status(401).json({ error: "Missing user_id" });
+
+        const result = await PlayListHandler.addSongToPlaylist(Number(playlist_id), Number(song_id));
+        if (!result) return res.status(500).json({ error: "Database error" });
+        return res.status(201).json({ success: true });
+    } catch (err: any) {
+        logger.error(`Error adding song to playlist: ${err.message}`, { playlist_id, song_id, stack: err.stack });
+        return res.status(500).json({ error: "Internal error" });
+    }
 });
 
-// 添加 music entry 到 playlist
-playlistRouter.post("/:playlist_id/music/:music_id", async (req: Request, res: Response) => {
-  const user_id = "admin";
-  const { playlist_id, music_id } = req.params;
-  try {
-    const lastID = await insertEntryByPlayListID(user_id, Number(playlist_id), Number(music_id));
-    res.status(201).json({ entry_id: lastID });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
+// Have not tested
+// Add songs to given playlist
+playlistRouter.put('/:playlist_id/add-songs', async (req, res): Promise<any> => {
+    let user_id, song_ids, playlist_id;
+    try {
+        ({ playlist_id } = req.params);
+        ({ song_ids } = req.body);
+
+        if (!playlist_id || isNaN(Number(playlist_id))) {
+            return res.status(400).json({ error: "Missing or invalid playlist_id" });
+        }
+
+        if (!Array.isArray(song_ids) || song_ids.length === 0) {
+            return res.status(400).json({ error: "Missing song_ids" });
+        }
+
+        const user_id = req.user?.user_id;
+        if (!user_id) return res.status(401).json({ error: "Missing user_id" });
+
+        const results = [];
+        for (const id of song_ids) {
+            const song_id = Number(id);
+            if (isNaN(song_id)) continue;
+            const result = await PlayListHandler.addSongToPlaylist(Number(playlist_id), song_id);
+            results.push({ song_id, success: !!result });
+        }
+
+        return res.status(201).json({ success: true, results });
+    } catch (err: any) {
+        logger.error(`Fail to add song`, {user_id, playlist_id, song_ids, stack: err.stack});
+        return res.status(500).json({ error: "Internal error" });
+    }
 });
 
-// 删除 playlist entry（从 playlist 中移除 music）
-playlistRouter.delete("/:playlist_id/entries/:entry_id", async (req: Request, res: Response) => {
-  const user_id = "admin";
-  const { playlist_id, entry_id } = req.params;
-  try {
-    await removeEntryByPlayListIDByEntryID(user_id, Number(playlist_id), Number(entry_id));
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
+
+// Get playlists by user_id
+playlistRouter.get('/', async (req, res): Promise<any> => {
+    try {
+        const user_id: string = req.user?.user_id;
+        if (!user_id) {
+            return res.status(401).json({ error: "Missing required user_id" });
+        }
+
+        let playlists = await PlayListHandler.getPlaylistsByUserID(user_id);
+        playlists = await Promise.all(
+            playlists.map(async (pl) => {
+                const songs = await PlayListHandler.getSongsByPlaylistID(pl.id!);
+                return {
+                    ...pl,
+                    songs: songs || []
+                };
+            })
+        );
+
+        return res.status(200).json(playlists);
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ error: "Internal error" });
+    }
 });
 
-export default playlistRouter;
+// Remove song from playlist
+playlistRouter.delete('/:playlist_id/:song_id', async (req, res): Promise<any> => {
+    try {
+        const user_id: string = req.user?.user_id;
+        if (!user_id) {
+            return res.status(401).json({ error: "Missing required user_id" });
+        }
+        const playlist_id = req.params.playlist_id;
+        const song_id = req.params.song_id;
+        if (!playlist_id || !song_id || isNaN(Number(playlist_id)) || isNaN(Number(song_id))) {
+            return res.status(400).json({ error: "Missing required field" });
+        }
+
+        const playlist = await PlayListHandler.getPlaylistByID(Number(playlist_id));
+        const permission = (await UserHandler.getUserByUserID(user_id))?.permission;
+        if (!permission) {
+            return res.status(401).json({ error: "User does not have permission" });
+        }
+        if (playlist?.user_id === user_id || permission > 10) {
+            const result = await PlayListHandler.removeSongFromPlaylist(Number(playlist_id), Number(song_id));
+            if (!result) {
+                return res.status(500).json({ error: "Database error" });
+            } else {
+                return res.status(201).json({ success: true });
+            }
+        } else {
+            return res.status(401).json({ error: "Do not have permission to update playlist" });
+        }
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ error: "Internal error" });
+    }
+});
+
+
+// Have not tested
+// Get songs from given playlist
+playlistRouter.get('/:playlist_id/songs', async (req, res): Promise<any> => {
+    try {
+        const { playlist_id } = req.params;
+        if (!playlist_id || isNaN(Number(playlist_id))) {
+            return res.status(400).json({ error: "Missing or invalid playlist_id" });
+        }
+
+        const user_id: string = req.user?.user_id;
+        if (!user_id) return res.status(401).json({ error: "Missing user_id" });
+
+        const songs = await PlayListHandler.getSongsByPlaylistID(Number(playlist_id));
+
+        return res.status(200).json(songs || []);
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ error: "Internal error" });
+    }
+});
