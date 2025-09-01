@@ -10,6 +10,7 @@ export interface FileRecord {
     is_deleted?: boolean,
     permission?: number,
     require_password?: boolean,
+    parent_id?: number,
 }
 
 export interface FileItem {

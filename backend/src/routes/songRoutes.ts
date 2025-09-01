@@ -140,7 +140,7 @@ songRouter.get('/stream/:song_id', async (req, res): Promise<any> => {
         const fullPath = path.posix.join(getUploadDir(), user_id, song.filepath, song.filename);
         if (!fs.existsSync(fullPath)) {
             // immediate remove
-            await FileHandler.quicklyRemoveById(song.file_id);
+            await FileHandler.quicklyRemoveById(song.file_id, user_id);
             logger.warn(`${song.filename} with file_id: ${song.file_id} has been removed since file does not exist`);
             return res.status(404).json({ error: "File not found" });
         }

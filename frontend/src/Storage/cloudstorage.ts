@@ -48,7 +48,7 @@ export const refresh = async (event: Event) => {
     });
 }
 // handling upload of files
-export const handleUpload = async (event: Event) => {
+export const handleUploadFile = async (event: Event) => {
     const input = event.target as HTMLInputElement;
     if (input.files == null) {
         Swal.fire({
@@ -64,8 +64,8 @@ export const handleUpload = async (event: Event) => {
     if (!input.files || input.files.length === 0) {
         Swal.fire({
             icon: 'error',
-            title: '上传错误',
-            text: '请上传合法文件',
+            title: 'Fail to upload file',
+            text: 'Please upload valid file',
             showConfirmButton: true,
             timer: 1000,
         });
@@ -86,12 +86,86 @@ export const handleUpload = async (event: Event) => {
         const message = (error as Error).message || error?.toString?.() || '未知错误';
         Swal.fire({
             icon: 'error',
-            title: '上传失败',
+            title: 'Fail to upload file',
             text: message,
             showConfirmButton: true,
         });
     }
 };
+
+export const handleUploadFolder = async () => {
+    try {
+        if (!("showDirectoryPicker" in window)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Fail to upload Folder',
+                text: 'Your browser does not support this feature. Please try chrome',
+                showConfirmButton: true,
+            });
+            return
+        }
+        const dirHandle:FileSystemDirectoryHandle = await (window as any).showDirectoryPicker();
+
+        const formData = new FormData();
+        const paths: string[] = [];
+        const folders: string[] = [];
+
+        const queue: { handle: FileSystemDirectoryHandle; path: string }[] = [
+            { handle: dirHandle, path: "" },
+        ];
+
+        while (queue.length > 0) {
+            const { handle, path } = queue.shift()!;
+
+            for await (const [name, entry] of (handle as any).entries()) {
+                const fullPath: string = path ? `${path}/${name}` : name;
+
+                if (entry.kind === "file") {
+                    const file = await entry.getFile();
+                    formData.append("files", file);
+                    paths.push(fullPath);
+                } else if (entry.kind === "directory") {
+                    folders.push(fullPath);
+                    queue.push({ handle: entry, path: fullPath });
+                }
+            }
+        }
+
+        if (!formData.get("files")) {
+            Swal.fire({
+                icon: "warning",
+                title: "Fail to upload folder",
+                text: "No file in directory",
+                timer: 2000,
+                showConfirmButton: false,
+            })
+            return;
+        }
+
+        formData.append("paths", JSON.stringify(paths));
+        formData.append("folders", JSON.stringify(folders));
+
+        await axiosInstance.post(`/api/upload-folder?path=${encodeURIComponent(currentPath.value)}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            }
+        });
+
+        await fetchFiles(currentPath.value);
+    } catch (error: any) {
+        if (error?.name === "AbortError") {
+            return;
+        }
+        const message = (error as Error).message || error?.toString?.() || 'Unknown error';
+        Swal.fire({
+            icon: 'error',
+            title: 'Fail to upload folder',
+            text: message,
+            showConfirmButton: true,
+        });
+    }
+};
+
 
 export const createFolder = async (folderName: string) => {
     if (!folderName) {
@@ -190,11 +264,11 @@ export const addSongs = async (selectedFiles: FileItem[]) => {
 
 export const handleAddSongs = async (selectedFiles: FileItem[]) => {
     const results = await addSongs(selectedFiles);
-    
+
     // 统计成功和失败的数量
     const successful = results.filter(result => result.status === 'fulfilled' && result.value.success);
     const failed = results.filter(result => result.status === 'rejected' || !result.value.success);
-    
+
     if (failed.length === 0) {
         Swal.fire({
             icon: "success",
@@ -228,7 +302,7 @@ export const getUserSongs = async () => {
         Swal.fire({
             toast: true,
             position: "top-end",
-            icon: "error", 
+            icon: "error",
             title: "Fail to update user songs",
         });
         return [];

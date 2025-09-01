@@ -44,20 +44,20 @@ const removeFiles = async () => {
             icon: 'warning',
             title: '',
             text: 'No file is selected',
-            showConfirmButton: false,  // 显示确认按钮
-            timer: 1000,  // 自动关闭时间
+            showConfirmButton: false,
+            timer: 1000,
         })
         return;
     }
     const result = await Swal.fire({
         title: 'Confirmation',
-        text: `Are you sure you want to delete ${selectFileItems.value.length} numbers of files?`,
+        text: ` Are you sure you want to delete ${selectFileItems.value.length} files?`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Delete',
         cancelButtonText: 'Cancel'
     });
-    // 如果用户点击了确认按钮
+    
     if (result.isConfirmed) {
         console.log('删除文件:', [...selectFileItems.value].map(file => file.name));
         await Promise.all([...selectFileItems.value].map(file => removeFile(file.id, file.type)));
