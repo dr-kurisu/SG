@@ -33,14 +33,17 @@ export const initDB = async (): Promise<Database> => {
                 user_id TEXT NOT NULL,
                 filename TEXT NOT NULL,
                 filepath TEXT NOT NULL,
+                parent_id INTEGER,
                 size INTEGER,
                 type TEXT,
                 uploaded_time DATETIME DEFAULT CURRENT_TIMESTAMP,
                 created_time DATETIME DEFAULT CURRENT_TIMESTAMP,
                 is_deleted BOOLEAN DEFAULT 0,
-                require_password BOOLEAN DEFAULT 0
+                require_password BOOLEAN DEFAULT 0,
+                FOREIGN KEY (parent_id) REFERENCES files(id) ON DELETE CASCADE
             );
         `);
+        // 高级
 
         // User table
         await newDB.exec(`
@@ -122,9 +125,9 @@ export const FileHandler = {
         db = await initDB();
         try {
             const result = await db.run(
-                `INSERT INTO files (user_id, filename, filepath, size, type)
-                 VALUES (?, ?, ?, ?, ?)`,
-                [file.user_id, file.filename, file.filepath, file.size, file.type]
+                `INSERT INTO files (user_id, filename, filepath, size, type, parent_id)
+                 VALUES (?, ?, ?, ?, ?, ?)`,
+                [file.user_id, file.filename, file.filepath, file.size, file.type, file.parent_id]
             );
             if (!result.lastID) {
                 throw new Error('Insert failed. No lastID return');
@@ -206,9 +209,17 @@ export const FileHandler = {
     },
 
     // Enforce remove file by id
-    quicklyRemoveById: async (id: number): Promise<void> => {
+    quicklyRemoveById: async (file_id: number, user_id: string): Promise<void> => {
         const db = await initDB();
-        await db.run(`DELETE FROM files WHERE id = ?`, [id]);
+        const file = await FileHandler.getById(file_id, user_id);
+        if (!file) throw new Error('Fail to get file');
+        if (file.type !== 'folder') {
+            logger.info(`Quickly removing file with id: ${file_id} file_name: ${file.filename}`)
+            await db.run(`DELETE FROM files WHERE id = ?`, [file_id]);
+        }else {
+            logger.info(`Quickly removing fodler with id: ${file_id}`);
+            // Remove all sub-folder and sub-files
+        }
     },
 
     // 删除文件By Given start path

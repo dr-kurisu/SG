@@ -3,9 +3,16 @@
         <!-- 上传文件按钮 -->
         <label for="file-upload" class="upload-btn">
             <i class="fas fa-upload"></i>
-            <span>上传文件</span>
-            <input id="file-upload" type="file" name="name" @change="handleUpload" class="hidden-input" />
+            <span>Upload File</span>
+            <input id="file-upload" type="file" name="name" @change="handleUploadFile" class="hidden-input" />
         </label>
+
+        <!-- 上传文件夹按钮 -->
+         <label for="folder-upload" class="upload-btn">
+            <i class="fas fa-upload"></i>
+            <span>Upload Folder</span>
+            <button id="folder-upload" class="hidden-input" @click="handleUploadFolder"></button>
+         </label>
 
         <!-- 新建文件夹按钮 -->
         <button @click="openModal" class="create-btn">
@@ -32,7 +39,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import { handleUpload, createFolder } from "@/storage/cloudstorage";
+import { handleUploadFile, handleUploadFolder, createFolder } from "@/storage/cloudstorage";
 
 const showModal = ref(false);
 const folderName = ref("");

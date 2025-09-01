@@ -4,6 +4,7 @@ import multer from 'multer';
 import { FileHandler } from './db_handler'; './db_handler';
 import { FileRecord, FileItem } from './types';
 import { v4 as uuidv4 } from 'uuid';
+import logger from '../logger/logger';
 
 const uploadDir = path.join(__dirname, '../../uploads').replace(/\\/g, '/');
 
@@ -51,9 +52,12 @@ export const getFileList = async (user_id: string, queryPath: string) => {
             mtime = stats.mtime.toISOString();
         } catch (err: any) {
             if (err.code === 'ENOENT') {
-                console.warn(`文件不存在于磁盘上: ${fullPath}`);
+                logger.warn(`文件不存在于磁盘上: ${fullPath}`);
+                const file_id = Number(file.id);
+                if (!file_id) throw new Error('File id not valid');
+                FileHandler.quicklyRemoveById(file_id, user_id);
             } else {
-                console.error(`读取文件失败: ${fullPath}`, err);
+                logger.error(`读取文件失败: ${fullPath}, ${err.message}`, {stack: err.stack});
             }
         }
 
@@ -104,18 +108,19 @@ export const createFolder = async (user_id: string, folderName: string, relative
     }
 };
 
-export const insertFile = async (userID: string, filename: string, relativePath: string, size: number, type: string) => {
+export const insertFile = async (user_id: string, filename: string, relativePath: string, size: number, type: string) => {
     const fileNameSanitized = filename.replace(/[<>:"/\\|?*]/g, '');
     const safePath = decodeURIComponent(relativePath).replace(/\.\./g, '');
     const file: FileRecord = {
-        user_id: userID,
+        user_id: user_id,
         filename: fileNameSanitized,
         filepath: safePath,
         size: size,
         type: type,
     };
 
-    await FileHandler.insert(file);
+    const file_id = await FileHandler.insert(file);
+    logger.info(`File with id: ${file_id} has been added to DB by user_id: ${user_id}`);
 };
 
 export const removeFolder = async (id: number, user_id: string) => {
