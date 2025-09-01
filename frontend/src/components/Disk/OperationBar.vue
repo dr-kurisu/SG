@@ -35,7 +35,7 @@
 
             <!-- 右侧删除按钮 -->
             <div class="delete-buttons">
-                <button @click="$emit('removeFiles')" class="btn-delete">
+                <button @click="$emit('removeFiles')" class="btn-delete" :disabled="selectFileItems.length === 0">
                     <i class="fas fa-trash-alt mr-1"></i> Delete
                 </button>
             </div>
@@ -192,6 +192,10 @@ const addSongs = async (addFileItems: FileItem[]) => {
 
 .right-buttons .btn-delete:hover {
     background-color: #b91c1c;
+}
+
+.btn-delete:disabled {
+    background-color: #d1d5db;
 }
 
 .add-song-switch {
