@@ -216,7 +216,7 @@ export const FileHandler = {
         if (file.type !== 'folder') {
             logger.info(`Quickly removing file with id: ${file_id} file_name: ${file.filename}`)
             await db.run(`DELETE FROM files WHERE id = ?`, [file_id]);
-        }else {
+        } else {
             logger.info(`Quickly removing fodler with id: ${file_id}`);
             // Remove all sub-folder and sub-files
         }
@@ -434,6 +434,32 @@ export const PlayListHandler = {
         return result.lastID!;
     },
 
+    // Update playlist by id
+    updatePlaylist: async (playlist_id: number, playlist: Playlist, user_id: string) => {
+        db = await initDB();
+        const result = await db.run(
+            `
+        UPDATE playlists
+        SET name = ?,
+            description = ?,
+            cover = ?
+        WHERE id = ? AND user_id = ?;
+        `,
+            [
+                playlist.name,
+                playlist.description ?? null,
+                playlist.cover ?? null,
+                playlist_id,
+                user_id
+            ]
+        );
+        if (result.changes === 0) {
+            throw new Error(`Fail to update playlist ${playlist_id}`);
+        }
+        return result.changes;
+    },
+
+
     // Get playlist by user_id
     getPlaylistsByUserID: async (user_id: string) => {
         db = await initDB();
@@ -510,7 +536,7 @@ export const PlayListHandler = {
              WHERE pe.playlist_id = ?`,
             [playlist_id]
         );
-        logger.debug(`Get songs in playlist_id: ${playlist_id}`, {songs});
+        logger.debug(`Get songs in playlist_id: ${playlist_id}`, { songs });
 
         return songs;
     },
@@ -530,11 +556,11 @@ export const PlayListHandler = {
 function handleInsertionSQLError(error: unknown): never {
     if (error instanceof Error) {
         if (error.message.includes('SQLITE_CONSTRAINT: FOREIGN KEY')) {
-            logger.error(`数据库外键约束错误 ${error.message}`, {stack: error.stack});
+            logger.error(`数据库外键约束错误 ${error.message}`, { stack: error.stack });
             throw new Error(`数据库外键约束错误: ${error.message}`);
         }
         if (error.message.includes('SQLITE_CONSTRAINT: UNIQUE')) {
-            logger.error(`数据不唯一 ${error.message}`, {stack: error.stack});
+            logger.error(`数据不唯一 ${error.message}`, { stack: error.stack });
             throw new Error(`数据不唯一: ${error.message}`);
         }
 
