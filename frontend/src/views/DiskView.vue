@@ -15,7 +15,7 @@
 </template>
 
 <script lang="ts" setup>
-import { currentPath, fetchFiles, files, refresh, removeFile } from '../storage/cloudstorage'
+import { currentFolderID, fetchFiles, files, refresh, removeFile, breadcrumb } from '../storage/cloudstorage'
 import type { FileItem } from '@/types/types';
 import { useRoute } from 'vue-router';
 import { onMounted, computed, ref } from 'vue';
@@ -25,13 +25,14 @@ import Swal from 'sweetalert2'
 import FileList from '@/components/Disk/FileList.vue';
 
 const route = useRoute();
-const pathParts = computed(() => currentPath.value.split('/').filter(Boolean));
+const pathParts = computed(() => breadcrumb.value.map(b => b.name));
+
 const selectFileItems = ref<FileItem[]>([]);
 
-const fetchFilesV2 = async (path: string) => {
-    console.log('Fetching files for path:', path);
+const fetchFilesV2 = async (currentFolderID: number) => {
+    console.log(`Fetching files for folder with id: ${currentFolderID}`);
     try {
-        await fetchFiles(path);
+        await fetchFiles(currentFolderID);
         selectFileItems.value = [];
     } catch (error) {
         console.error('获取文件列表失败:', error);
@@ -62,28 +63,30 @@ const removeFiles = async () => {
         console.log('删除文件:', [...selectFileItems.value].map(file => file.name));
         await Promise.all([...selectFileItems.value].map(file => removeFile(file.id, file.type)));
         selectFileItems.value = [];
-        await fetchFilesV2(currentPath.value);
+        await fetchFilesV2(currentFolderID.value);
     }
 }
 
 const goTo = (index: number) => {
-    const newPath = '/' + pathParts.value.slice(0, index + 1).join('/') + '/'
-    if (newPath != currentPath.value) {
-        currentPath.value = newPath;
-        fetchFilesV2(newPath);
+    const target = breadcrumb.value[index];
+    if (!target) return;
+
+    if (target.id !== currentFolderID.value) {
+        currentFolderID.value = target.id;
+        fetchFilesV2(currentFolderID.value);
     }
+    // 截断面包屑
+    breadcrumb.value = breadcrumb.value.slice(0, index + 1);
 }
 
 const goRoot = () => {
-    if (currentPath.value != '/') {
-        currentPath.value = '/';
-        fetchFilesV2(currentPath.value);
-    }
+    currentFolderID.value = -1;
+    fetchFilesV2(-1);
+    breadcrumb.value = [];
 }
 
 const back = () => {
-    console.log('当前路径:', currentPath.value);
-    if (currentPath.value === '/' || !currentPath.value) {
+    if (breadcrumb.value.length <= 0) {
         Swal.fire({
             icon: 'warning',
             title: '',
@@ -92,20 +95,27 @@ const back = () => {
             position: "top",
             showConfirmButton: false,
             timer: 1500,
-        })
+        });
         return;
     }
-    const parts = currentPath.value.split('/').filter(Boolean);
-    parts.pop();
-    currentPath.value = '/' + parts.join('/') + (parts.length ? '/' : '');
-    fetchFilesV2(currentPath.value);
-}
+
+    // 移除最后一级
+    breadcrumb.value.pop();
+
+    if (breadcrumb.value.length === 0) goRoot();
+
+    const last = breadcrumb.value[breadcrumb.value.length - 1];
+    currentFolderID.value = last.id;
+
+    fetchFilesV2(currentFolderID.value);
+};
+
 
 
 onMounted(() => {
-    if (route.query.path) {
-        currentPath.value = route.query.path.toString();
-    }
-    fetchFilesV2(currentPath.value);
+    // if (route.query.path) {
+    //     currentPath.value = route.query.path.toString();
+    // }
+    fetchFilesV2(currentFolderID.value);
 });
 </script>

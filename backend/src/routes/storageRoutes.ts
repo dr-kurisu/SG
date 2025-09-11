@@ -3,7 +3,6 @@ import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import { createFolder, getFileList, storage, insertFile, removeFile, removeFolder } from '../services/storage';
 import path from 'path';
-import fs from 'fs';
 import logger from '../logger/logger';
 
 const storageRouter = Router()
@@ -14,21 +13,32 @@ export const upload = multer({
 })
 
 // 获取文件/文件夹列表
-storageRouter.get('/files', async (req: Request, res: Response) => {
+storageRouter.get('/files', async (req: Request, res: Response): Promise<any> => {
+    // Get files by given current folder id will be better
+    let user_id: string | undefined;
+    let folder_id: number | undefined;
     try {
-        const pathQuery = req.query.path as string || '/';
-        try {
-            const user_id = req.user!.user_id;
-            // 调用service接口
-            const result = await getFileList(user_id, pathQuery);
-            res.status(200).json(result);
-        } catch (err) {
-            console.error("user_id is required: ", err);
-            res.status(401).send("Cannot get files without user_id");
+        folder_id = Number(req.query.folder_id);
+        user_id = req.user!.user_id;
+
+        // root folder or not valid folder_id
+        if (isNaN(folder_id) || folder_id < 0) {
+            const files = await getFileList(user_id!, -1);
+            logger.info(`Get root files { user_id: ${user_id}, count: ${files.length} }`);
+            return res.status(200).json(files);
+        }else {
+            const files = await getFileList(user_id!, folder_id);
+            logger.info(`Get files { user_id: ${user_id}, folder_id: ${folder_id}, count: ${files.length} }`);
+            return res.status(200).json(files);
         }
-    } catch (err) {
-        console.error('Error reading files:', err);
-        res.status(500).json({ error: '无法读取文件目录' });
+    }catch(err: any) {
+        logger.error("Fail to get files in /api/files", {
+            error: err.message,
+            stack: err.stack,
+            user_id: user_id ?? "unknown",
+            folder_id: folder_id ?? "unknown"
+        });
+        return res.status(500).json({ error: "Internal Error" });
     }
 })
 

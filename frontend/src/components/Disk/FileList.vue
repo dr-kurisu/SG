@@ -70,16 +70,13 @@
 <script setup lang="ts">
 import type { FileItem } from '@/types/types';
 import { ref } from 'vue';
-import { getFileIcon, files, currentPath, disbaleFileItems } from '@/storage/cloudstorage';
-import { useRouter } from 'vue-router';
+import { getFileIcon, files, disbaleFileItems, breadcrumb, currentFolderID } from '@/storage/cloudstorage';
 
 const props = defineProps<{
     selectFileItems: FileItem[];
 }>();
 
 const emit = defineEmits(['fetchFilesV2', 'update:selectFileItems']);
-
-const router = useRouter();
 
 const toggleSelection = (fileItem: FileItem) => {
     const newSelectedFileItems = [...props.selectFileItems];
@@ -143,14 +140,13 @@ const handleItemClick = async (item: FileItem) => {
 }
 
 const openFolder = async (item: FileItem) => {
-    currentPath.value += `${item.name}/`;
-    emit("fetchFilesV2", currentPath.value);
+    breadcrumb.value.push({ id: item.id, name: item.name });
+    currentFolderID.value = item.id;
+    emit("fetchFilesV2", item.id);
 }
 
 const previewFile = async (item: FileItem) => {
-    const encodedPath = encodeURIComponent(currentPath.value);
-    const encodedID = encodeURIComponent(item.name);
-    router.push(`/preview?path=${encodedPath}&fileID=${encodedID}`);
+    console.log(`Try to preview file with name: ${item.name}`);
 }
 
 

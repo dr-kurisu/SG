@@ -33,3 +33,8 @@ export interface FileItem {
   type: string;
   modifiedTime: string;
 }
+
+export interface Breadcrumb {
+    id: number;
+    name: string;
+}

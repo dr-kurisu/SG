@@ -8,7 +8,6 @@ import logger from '../logger/logger';
 
 const uploadDir = path.join(__dirname, '../../uploads').replace(/\\/g, '/');
 
-
 export const storage = multer.diskStorage({
     destination(req, file, cb) {
         // Get user_id
@@ -32,17 +31,36 @@ export const storage = multer.diskStorage({
     }
 });
 
-
-export const getFileList = async (user_id: string, queryPath: string) => {
-    const safePath = decodeURIComponent(queryPath || '/').replace(/\.\./g, '');
-    const fullDir = path.posix.join(uploadDir, user_id, safePath);
+export const getFileList = async (user_id: string, folder_id: number) => {
     let dbFiles: FileRecord[];
-    try {
-        dbFiles = await FileHandler.getFilesByPath(user_id, safePath);
-    } catch (err) {
-        console.log(err);
-        return [];
+    let fullDir: string;
+
+    // Deal with root path
+    if (folder_id === -1) {
+        try {
+            dbFiles = await FileHandler.getFilesByPath(user_id, "/");
+            fullDir = path.posix.join(uploadDir, user_id);
+        } catch (err) {
+            console.log(err);
+            return [];
+        }
+    } else {
+        // Get folder record
+        const folder = await FileHandler.getById(folder_id, user_id);
+        if (!folder) throw new Error(`Folder does not exist in DB with id: ${folder_id}`);
+
+        const safePath = path.posix.join(folder.filepath, folder.filename) + "/";
+        fullDir = path.posix.join(uploadDir, user_id, folder.filepath, folder.filename);
+
+        // Get All file records
+        try {
+            dbFiles = await FileHandler.getFilesByPath(user_id, safePath);
+        } catch (err) {
+            console.log(err);
+            return [];
+        }
     }
+
 
     return dbFiles.map(file => {
         const fullPath = path.posix.join(fullDir, file.filename);
@@ -57,7 +75,12 @@ export const getFileList = async (user_id: string, queryPath: string) => {
                 if (!file_id) throw new Error('File id not valid');
                 FileHandler.quicklyRemoveById(file_id, user_id);
             } else {
-                logger.error(`读取文件失败: ${fullPath}, ${err.message}`, {stack: err.stack});
+                logger.error(`读取文件失败: ${fullPath}, ${err.message}`, { 
+                    fullPath,
+                    user_id,
+                    error: err.message,
+                    stack: err.stack,
+                });
             }
         }
 
@@ -75,6 +98,8 @@ export const getFileList = async (user_id: string, queryPath: string) => {
     });
 };
 
+
+
 export const createFolder = async (user_id: string, folderName: string, relativePath: string) => {
     const folderNameSanitized = folderName.replace(/[<>:"/\\|?*]/g, '');
     const safePath = decodeURIComponent(relativePath).replace(/\.\./g, '');
@@ -85,7 +110,7 @@ export const createFolder = async (user_id: string, folderName: string, relative
     }
 
     try {
-        fs.mkdirSync(folderPath);
+        fs.mkdirSync(folderPath, { recursive: true });
 
         // update info in DB
         const folderRecord: FileRecord = {
@@ -211,10 +236,10 @@ export const removeFile = async (id: number, user_id: string): Promise<boolean> 
     return true;
 };
 
-export const removeFileOrFolder = async(file: FileRecord) => {
+export const removeFileOrFolder = async (file: FileRecord) => {
     if (file.type === 'folder') {
         removeFolder(file.id!, file.user_id);
-    }else {
+    } else {
         removeFile(file.id!, file.user_id);
     }
 }

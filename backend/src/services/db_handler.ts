@@ -39,12 +39,9 @@ export const initDB = async (): Promise<Database> => {
                 uploaded_time DATETIME DEFAULT CURRENT_TIMESTAMP,
                 created_time DATETIME DEFAULT CURRENT_TIMESTAMP,
                 is_deleted BOOLEAN DEFAULT 0,
-                require_password BOOLEAN DEFAULT 0,
                 FOREIGN KEY (parent_id) REFERENCES files(id) ON DELETE CASCADE
             );
         `);
-        // 高级
-
         // User table
         await newDB.exec(`
             CREATE TABLE IF NOT EXISTS users (
@@ -175,6 +172,7 @@ export const FileHandler = {
     // Given path return files in query path
     getFilesByPath: async (user_id: string, queryPath: string): Promise<FileRecord[]> => {
         db = await initDB();
+        
         const files = await db.all<FileRecord[]>(
             `SELECT * FROM files WHERE user_id = ? AND 
             filepath = ? AND is_deleted = 0 ORDER BY uploaded_time DESC`,
@@ -219,6 +217,9 @@ export const FileHandler = {
         } else {
             logger.info(`Quickly removing fodler with id: ${file_id}`);
             // Remove all sub-folder and sub-files
+            const folderPath = path.posix.join(file.filepath, file.filename);
+            await db.run(`DELETE FROM files WHERE filepath LIKE ?`, [`${folderPath}%`]);
+            await db.run(`DELETE FROM files WHERE id = ?`, [file.id]);
         }
     },
 
@@ -231,17 +232,6 @@ export const FileHandler = {
             SET is_deleted = 1 
             WHERE filepath LIKE ? AND user_id = ?`,
             [`${startPath}%`, user_id]
-        );
-    },
-
-    // 更新是否为加密文件夹
-    updateRequirePassword: async (id: number, newValue: boolean) => {
-        db = await initDB();
-        await db.run(`
-            UPDATE files
-            SET require_password = ?
-            WHERE id = ?`,
-            [newValue, id]
         );
     },
 };

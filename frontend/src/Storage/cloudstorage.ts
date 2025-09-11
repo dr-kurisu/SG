@@ -1,26 +1,48 @@
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { instance as axiosInstance } from '@/api/axios';
 import axios from "axios";
 import Swal from 'sweetalert2'
-import type { FileItem, Song } from '@/types/types';
+import path from "path-browserify";
+import type { Breadcrumb, FileItem, Song } from '@/types/types';
+import { ElNotification } from 'element-plus';
 
 export const files = ref<FileItem[]>([]);
-export const currentPath = ref('/');
+export const currentFolderID = ref<number>(-1);
 export const disbaleFileItems = ref<Set<number>>(new Set());
 export const isAdding = ref(false);
+export const breadcrumb = ref<Breadcrumb[]>([]);
+export const currentPath = computed(() => {
+    if (breadcrumb.value.length === 0) {
+        return "/";
+    }
+    let joined = path.posix.join(...breadcrumb.value.map(b => b.name));
+    if (!joined.startsWith("/")) {
+        joined = "/" + joined;
+    }
+    if (!joined.endsWith("/")) {
+        joined += "/";
+    }
+    return joined;
+});
 
-export const fetchFiles = async (path: string = '/') => {
+export const fetchFiles = async (folder_id: number) => {
     try {
-        const res = await axiosInstance.get<FileItem[]>('/api/files', {
-            params: { path }
-        });
+        const res = await axiosInstance.get<FileItem[]>(`/api/files?folder_id=${folder_id}`);
 
         files.value = res.data;
+
+        Swal.fire({
+            icon: "success",
+            toast: true,
+            text: 'successfully refreshed!',
+            position: "top",
+            timer: 800,
+            showConfirmButton: false
+        });
 
         // console.log('当前路径:', path, '文件列表:', files.value.map(v => v.name));
     } catch (err: any) {
         if (err.response.status === 401 || err.response.status === 403) {
-            // 跳转
             return;
         }
         Swal.fire({
@@ -36,7 +58,7 @@ export const fetchFiles = async (path: string = '/') => {
 
 // button adaptor
 export const refresh = async (event: Event) => {
-    await fetchFiles(currentPath.value);
+    await fetchFiles(currentFolderID.value);
     Swal.fire({
         icon: 'success',
         title: '',
@@ -80,7 +102,7 @@ export const handleUploadFile = async (event: Event) => {
                 'Content-Type': 'multipart/form-data',
             }
         });
-        await fetchFiles(currentPath.value);
+        await fetchFiles(currentFolderID.value);
         input.value = '';
     } catch (error) {
         const message = (error as Error).message || error?.toString?.() || '未知错误';
@@ -93,6 +115,7 @@ export const handleUploadFile = async (event: Event) => {
     }
 };
 
+// Have bugs
 export const handleUploadFolder = async () => {
     try {
         if (!("showDirectoryPicker" in window)) {
@@ -104,7 +127,7 @@ export const handleUploadFolder = async () => {
             });
             return
         }
-        const dirHandle:FileSystemDirectoryHandle = await (window as any).showDirectoryPicker();
+        const dirHandle: FileSystemDirectoryHandle = await (window as any).showDirectoryPicker();
 
         const formData = new FormData();
         const paths: string[] = [];
@@ -151,7 +174,7 @@ export const handleUploadFolder = async () => {
             }
         });
 
-        await fetchFiles(currentPath.value);
+        await fetchFiles(currentFolderID.value);
     } catch (error: any) {
         if (error?.name === "AbortError") {
             return;
@@ -184,8 +207,14 @@ export const createFolder = async (folderName: string) => {
             currentPath: currentPath.value
         });
 
-        console.log("createFolderMessage: ", response.data.message);
-        fetchFiles(currentPath.value);
+        ElNotification({
+            title: 'Success',
+            message: 'Folder created successfully!',
+            type: 'success',
+            position: 'top-right',
+            duration: 2000
+        });
+        fetchFiles(currentFolderID.value);
 
     } catch (error: any) {
         if (axios.isAxiosError(error)) {
@@ -213,7 +242,7 @@ export const removeFile = async (id: number, file_type: string) => {
     if (file_type === 'folder') {
         try {
             const response = await axiosInstance.delete(`/api/deleteFolder/${id}`);
-            fetchFiles(currentPath.value);
+            fetchFiles(currentFolderID.value);
         } catch (error) {
             Swal.fire({
                 icon: 'error',
