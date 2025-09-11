@@ -35,7 +35,7 @@
 
             <!-- 右侧删除按钮 -->
             <div class="delete-buttons">
-                <button @click="$emit('removeFiles')" class="btn-delete" :disabled="selectFileItems.length === 0">
+                <button @click="$emit('removeFiles')" class="btn-delete" :disabled="selectFileItems.length === 0 || isAdding">
                     <i class="fas fa-trash-alt mr-1"></i> Delete
                 </button>
             </div>

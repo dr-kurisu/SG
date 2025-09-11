@@ -8,19 +8,12 @@
             <button class="add-playlist-btn" @click="showModalCreatePL = true">+</button>
         </div>
 
-        <!-- 模态框 新建歌单 -->
-        <div v-if="showModalCreatePL" class="modal-overlay" @click.self="showModalCreatePL = false">
-            <div class="modal">
-                <h3>新建播放列表</h3>
-                <input v-model="newPlaylist.name" placeholder="请输入名称" />
-                <input v-model="newPlaylist.description" placeholder="请输入描述" />
+        <PlaylistModal :visible="showModalCreatePL" mode="create" @confirm="createPlaylist"
+            @close="showModalCreatePL = false" />
 
-                <div class="modal-actions">
-                    <button @click="createPlaylist">确定</button>
-                    <button @click="showModalCreatePL = false">取消</button>
-                </div>
-            </div>
-        </div>
+        <PlaylistModal v-if="playlistToBeEdited" :visible="showModalEditPL" mode="edit" :playlist="playlistToBeEdited"
+            @confirm="editPlaylist" @close="showModalEditPL = false" />
+
 
         <!-- 模态框 插入歌曲 -->
         <AddSongModal v-if="showAddSongModal" :playlist="selectedPlaylist" :songs="songs"
@@ -37,8 +30,19 @@
                 <div class="playlist-info">
                     <div class="playlist-name">{{ playlist.name }}</div>
                     <div class="playlist-desc">{{ playlist.description }}</div>
-                    <div class="playlist-count">{{ playlist.songs.length }}首歌曲</div>
+                    <div class="playlist-count">{{ playlist.songs?.length }}首歌曲</div>
                 </div>
+
+                <el-dropdown trigger="click">
+                    <span class="el-dropdown-link" @click.stop>⋮</span>
+                    <template #dropdown>
+                        <el-dropdown-menu>
+                            <el-dropdown-item @click="deletePlaylist(playlist.id!)">Delete</el-dropdown-item>
+                            <el-dropdown-item
+                                @click="() => { showModalEditPL = true, playlistToBeEdited = playlist }">Edit</el-dropdown-item>
+                        </el-dropdown-menu>
+                    </template>
+                </el-dropdown>
             </div>
         </div>
 
@@ -71,28 +75,106 @@ import { usePlayerStore } from '@/stores/music'
 import { instance as axiosInstance } from '@/api/axios';
 import Swal from 'sweetalert2';
 import AddSongModal from './AddSongModal.vue';
+import PlaylistModal from './PlaylistModal.vue';
+import { ElNotification } from 'element-plus';
 
 const emit = defineEmits(['play-song']);
 
 const playlists = ref<Playlist[]>([]);
 const selectedPlaylist = ref<Playlist | null>(null);
+const playlistToBeEdited = ref<Playlist | null>(null);
 const currentSong = ref<Song | null>(null);
 const player = usePlayerStore();
 const songs = ref<Song[]>([]);
 
 const showModalCreatePL = ref(false);
 const showAddSongModal = ref(false);
+const showModalEditPL = ref(false);
 
-const newPlaylist = ref({
-    name: '',
-    description: '',
-});
+async function deletePlaylist(playlist_id: number) {
+    if (!playlist_id) {
+        ElNotification({
+            title: 'Warning',
+            message: 'Playlist_id is invalid',
+            type: 'warning',
+            position: 'top-right',
+            duration: 2000
+        });
+        return;
+    }
+
+    try {
+        const result = await axiosInstance.delete(`/api/playlist/${playlist_id}`);
+
+        if (result.status !== 204) {
+            ElNotification({
+                title: 'Error',
+                message: 'Please try again latter',
+                type: 'error',
+                position: 'top-right',
+                duration: 2000
+            });
+        } else {
+            ElNotification({
+                title: 'Success',
+                message: 'Playlist have been removed',
+                type: 'success',
+                position: 'top-right',
+                duration: 1500
+            });
+            updateInfo();
+        }
+    } catch (err) {
+        ElNotification({
+            title: 'Error',
+            message: 'Internet error or internal error',
+            type: 'error',
+            position: 'top-right',
+            duration: 2500
+        });
+    }
+}
+
+async function editPlaylist(payload: Playlist) {
+    try {
+        showModalEditPL.value = false;
+
+        const playlist: Playlist = { ...payload };
+        const result = await axiosInstance.post(`/api/playlist/update`, { playlist });
+
+        if (result.status === 204) {
+            ElNotification({
+                title: "Success",
+                message: `Playlist "${playlist.name}" updated successfully`,
+                type: "success",
+                duration: 2000,
+            });
+            await updateInfo();
+        } else {
+            ElNotification({
+                title: "Warning",
+                message: "Playlist update did not complete",
+                type: "warning",
+                duration: 2000,
+            });
+        }
+    } catch (err) {
+        console.error(err);
+        ElNotification({
+            title: "Error",
+            message: "Failed to update playlist, please try again",
+            type: "error",
+            duration: 2000,
+        });
+    }
+}
+
 
 // 选择播放列表
 function selectPlaylist(playlist: Playlist) {
     updatePlaylists();
     selectedPlaylist.value = playlist;
-    player.updatePlaylist(playlist.songs);
+    player.updatePlaylist(playlist.songs || []);
 }
 
 // 播放歌曲
@@ -107,16 +189,14 @@ async function updateInfo() {
     try {
         await Promise.all([
             updatePlaylists(),
-            updateSongsInPlaylist(),
             updateUserSongs()
         ]);
-        Swal.fire({
-            icon: 'success',
-            toast: true,
-            title: 'Successfully refreshed',
-            timer: 2000,
-            position: "top",
-            showConfirmButton: false,
+        ElNotification({
+            title: "Success",
+            type: "success",
+            message: "Successfully refreshed",
+            position: "top-right",
+            duration: 1500
         })
     } catch (err) {
         console.error("Failed to update info:", err);
@@ -136,7 +216,7 @@ async function updatePlaylists(): Promise<void> {
     if (res.status !== 200) {
         Swal.fire({
             icon: 'warning',
-            title: '刷新Playlist失败',
+            title: 'Fail to refresh playlists',
             text: '',
             showConfirmButton: true,
             timer: 600,
@@ -144,6 +224,10 @@ async function updatePlaylists(): Promise<void> {
         return;
     }
     playlists.value = res.data;
+    const exists = playlists.value.some(p => p.id === selectedPlaylist.value?.id)
+    if (!exists) {
+        selectedPlaylist.value = null;
+    };
     updateSongsInPlaylist();
 }
 
@@ -163,37 +247,37 @@ async function updateSongsInPlaylist(): Promise<void> {
         Swal.fire({
             icon: 'error',
             title: 'Fail to update songs',
-            text: 'Please try again latter',
+            text: `Please try again latter`,
             showConfirmButton: true,
             timer: 1500
         });
     }
 }
 
-async function createPlaylist(): Promise<void> {
-    if (!newPlaylist.value.name) {
+async function createPlaylist(payload: Playlist): Promise<void> {
+    const { name, description, cover } = payload;
+    if (!name) {
         Swal.fire({
             icon: 'warning',
-            title: '请输入Playlist信息',
+            title: 'Please input required field',
             text: '',
             showConfirmButton: true,
             timer: 1200,
         });
     }
     try {
-        const res = await axiosInstance.post('/api/playlist/add', newPlaylist.value);
+        const res = await axiosInstance.post('/api/playlist/add', { name, description, cover });
         if (res.status !== 201) {
             throw new Error("Fail to add new playlist");
         }
         updatePlaylists();
         showModalCreatePL.value = false;
-        newPlaylist.value = { name: '', description: '' };
     } catch (err) {
         console.error(err);
         showModalCreatePL.value = false;
         Swal.fire({
             icon: 'warning',
-            title: '新增Playlist失败',
+            title: 'Fail to add new playlist',
             text: '',
             showConfirmButton: true,
             timer: 1200,
@@ -202,9 +286,6 @@ async function createPlaylist(): Promise<void> {
 }
 
 async function addSongsToPlaylist(songs_id: Set<number>) {
-    // test
-    console.log(songs_id);
-
     if (songs_id.size <= 0) {
         showAddSongModal.value = false;
         return;
@@ -265,6 +346,17 @@ onBeforeMount(() => {
 </script>
 
 <style scoped>
+.el-dropdown-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    user-select: none;
+}
+
 .playlist-header {
     display: flex;
     justify-content: space-between;
@@ -347,9 +439,7 @@ onBeforeMount(() => {
     font-size: 0.8rem;
     color: #666;
     margin-bottom: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
 }
 
 .playlist-count {
@@ -505,7 +595,8 @@ onBeforeMount(() => {
     color: #333;
 }
 
-.btn-back, .btn-refresh {
+.btn-back,
+.btn-refresh {
     font-size: 0.875rem;
     color: #2563eb;
     transition: transform 0.1s;

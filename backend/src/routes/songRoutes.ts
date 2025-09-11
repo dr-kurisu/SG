@@ -150,7 +150,6 @@ songRouter.get('/stream/:song_id', async (req, res): Promise<any> => {
         const fileSize = stat.size;
         const range = req.headers.range;
 
-        // 支持断点续传
         if (range) {
             const parts = range.replace(/bytes=/, "").split("-");
             const start = parseInt(parts[0], 10);

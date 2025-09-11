@@ -19,7 +19,6 @@ playlistRouter.post('/add', async (req, res) => {
             res.status(400).json({ error: "Missing required fields" });
             return;
         }
-
         playlist.user_id = user_id;
 
         const playlist_id = await PlayListHandler.createPlaylist(playlist);
@@ -33,6 +32,32 @@ playlistRouter.post('/add', async (req, res) => {
         res.status(500).json({ error: "Failed to add playlist" });
     }
 });
+
+// edit playlist
+playlistRouter.post('/update', async (req, res): Promise<any> => {
+    try {
+        const user_id = req.user?.user_id;
+
+        if (!user_id) {
+            return res.status(401).json({ error: "Unauthorised! Require user_id" });
+        }
+
+        const playlist: Playlist = req.body.playlist;
+        if (!playlist) return res.status(400).json({ error: "playlist invalid or missed" });
+
+        logger.debug(`Update playlist: `, {playlist});
+        const playlist_id = playlist.id;
+        if (!playlist_id) return res.status(400).json({ error: "playlist_id invalid or missed" });
+
+        await PlayListHandler.updatePlaylist(playlist_id, playlist, user_id);
+
+        logger.info(`Successfully updated playlist with id: ${playlist_id} in /playlist/update`);
+        return res.status(204).json({ success: true });
+    } catch (err: any) {
+        logger.error(err.message, { stack: err.stack });
+        res.status(500).json({ error: "Fail to update playlist"});
+    }
+})
 
 
 // remove playlist
@@ -50,7 +75,7 @@ playlistRouter.delete('/:playlist_id', async (req, res) => {
         if (playlist?.user_id !== user_id) {
             res.status(401).json({ error: "User_id not match do not have permission to delete playlist" });
             return;
-        } 
+        }
 
         const result = await PlayListHandler.removePlaylistByID(Number(playlist_id));
         if (!result) {
@@ -114,7 +139,7 @@ playlistRouter.put('/:playlist_id/add-songs', async (req, res): Promise<any> => 
 
         return res.status(201).json({ success: true, results });
     } catch (err: any) {
-        logger.error(`Fail to add song`, {user_id, playlist_id, song_ids, stack: err.stack});
+        logger.error(`Fail to add song`, { user_id, playlist_id, song_ids, stack: err.stack });
         return res.status(500).json({ error: "Internal error" });
     }
 });

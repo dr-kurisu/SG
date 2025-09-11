@@ -9,11 +9,11 @@ export interface Song {
 }
 
 export interface Playlist {
-  id: string
+  id?: number
   name: string
-  description: string
-  cover: string
-  songs: Song[]
+  description?: string
+  cover?: string
+  songs?: Song[]
 }
 
 
