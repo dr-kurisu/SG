@@ -4,6 +4,7 @@ import multer from 'multer';
 import { createFolder, getFileList, storage, insertFile, removeFile, removeFolder } from '../services/storage';
 import path from 'path';
 import logger from '../logger/logger';
+import { ProtectFileHandler } from '../services/db_handler';
 
 const storageRouter = Router()
 
@@ -20,25 +21,35 @@ storageRouter.get('/files', async (req: Request, res: Response): Promise<any> =>
     try {
         folder_id = Number(req.query.folder_id);
         user_id = req.user!.user_id;
+        const passwordHash = req.header("X-Folder-Password") || null;
 
         // root folder or not valid folder_id
         if (isNaN(folder_id) || folder_id < 0) {
             const files = await getFileList(user_id!, -1);
             logger.info(`Get root files { user_id: ${user_id}, count: ${files.length} }`);
             return res.status(200).json(files);
-        }else {
-            const files = await getFileList(user_id!, folder_id);
+        } else {
+            const files = await getFileList(user_id!, folder_id, passwordHash);
             logger.info(`Get files { user_id: ${user_id}, folder_id: ${folder_id}, count: ${files.length} }`);
             return res.status(200).json(files);
         }
-    }catch(err: any) {
-        logger.error("Fail to get files in /api/files", {
-            error: err.message,
-            stack: err.stack,
-            user_id: user_id ?? "unknown",
-            folder_id: folder_id ?? "unknown"
-        });
-        return res.status(500).json({ error: "Internal Error" });
+    } catch (err: any) {
+        if (err.message.includes("Password is required")) {
+            logger.info(`Password required for folder ${folder_id}, user_id=${user_id}`);
+            return res.status(403).json({ error: err.message });
+        }
+        if (err.message.includes("Password not correct")) {
+            logger.warn(`Wrong password for folder ${folder_id}, user_id=${user_id}`);
+            return res.status(403).json({ error: err.message });
+        } else {
+            logger.error("Fail to get files in /api/files", {
+                error: err.message,
+                stack: err.stack,
+                user_id: user_id ?? "unknown",
+                folder_id: folder_id ?? "unknown"
+            });
+            return res.status(500).json({ error: "Internal Error" });
+        }
     }
 })
 
@@ -163,6 +174,25 @@ storageRouter.delete('/deleteFolder/:id', async (req: Request, res: Response) =>
     } catch (error) {
         console.error('Error deleting folder:', error);
         res.status(500).json({ error: "Deletion of folder failed" });
+    }
+});
+
+// Check if file is protected
+storageRouter.get('/isprotect/:file_id', async (req: Request, res: Response): Promise<any> => {
+    const user_id = req.user!.user_id;
+    let file_id;
+    try {
+        file_id = Number(req.query.file_id);
+        if (isNaN(file_id)) return res.status(400).json({ error: "file_id is required" });
+        const existing = await ProtectFileHandler.isProtected(file_id);
+        return existing;
+    } catch (err: any) {
+        logger.error(`Fail to get isProtected with file_id: ${file_id}`, {
+            user_id,
+            error: err.message ?? "UKNOWN",
+            stack: err.stack
+        });
+        return res.status(500).json({ error: "Internal Error" });
     }
 });
 

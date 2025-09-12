@@ -75,21 +75,6 @@ describe('File field update', () => {
         expect(result).toBe(true);
         expect(newFile?.permission).toBe(1);
     });
-
-    test('Update require_password', async () => {
-        const file_id = await FileHandler.insert({
-            user_id: "test",
-            filename: "test",
-            filepath: "/",
-            size: 1000,
-            type: "audio/mpeg"
-        });
-        const oldFile = await FileHandler.getById(file_id, "test");
-        expect(oldFile?.require_password).toBe(0);
-        await FileHandler.updateRequirePassword(file_id, true);
-        const newFile = await FileHandler.getById(file_id, "test");
-        expect(newFile?.require_password).toBe(1);
-    });
 });
 
 describe('User table test', () => {
@@ -405,6 +390,11 @@ describe('Playlist and entries test', () => {
         expect(songs[0].file_id).toBe(file_id);
         expect(songs[0].cover).toBeNull();
     });
+});
+
+
+describe(`Protected files test`, () => {
+
 });
 
 function constructExampleSong(file_id: number): SongRecord {

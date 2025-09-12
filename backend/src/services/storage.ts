@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import multer from 'multer';
-import { FileHandler } from './db_handler'; './db_handler';
+import { FileHandler, ProtectFileHandler } from './db_handler'; './db_handler';
 import { FileRecord, FileItem } from './types';
 import { v4 as uuidv4 } from 'uuid';
 import logger from '../logger/logger';
@@ -31,7 +31,7 @@ export const storage = multer.diskStorage({
     }
 });
 
-export const getFileList = async (user_id: string, folder_id: number) => {
+export const getFileList = async (user_id: string, folder_id: number, password: string | null = null) => {
     let dbFiles: FileRecord[];
     let fullDir: string;
 
@@ -45,6 +45,17 @@ export const getFileList = async (user_id: string, folder_id: number) => {
             return [];
         }
     } else {
+        // Check password
+        const isProtected = await ProtectFileHandler.isProtected(folder_id);
+        if (isProtected && password === null) {
+            throw new Error(`Password is required to access this folder`);
+        }else if (isProtected && password){
+            const result = await ProtectFileHandler.verify(folder_id, password);
+            if (!result) {
+                throw new Error(`Password not correct`);
+            }
+        }
+
         // Get folder record
         const folder = await FileHandler.getById(folder_id, user_id);
         if (!folder) throw new Error(`Folder does not exist in DB with id: ${folder_id}`);

@@ -105,7 +105,7 @@ export const handleUploadFile = async (event: Event) => {
         await fetchFiles(currentFolderID.value);
         input.value = '';
     } catch (error) {
-        const message = (error as Error).message || error?.toString?.() || '未知错误';
+        const message = (error as Error).message || error?.toString?.() || 'UNKNOWN';
         Swal.fire({
             icon: 'error',
             title: 'Fail to upload file',

@@ -1,6 +1,6 @@
 import sqlite3 from "sqlite3";
 import { open, Database } from 'sqlite';
-import { FileRecord, Playlist, SongRecord, UserRecord } from "./types";
+import { FileRecord, Playlist, ProtectedFileRecord, SongRecord, UserRecord } from "./types";
 import path from "path";
 import bcrypt from "bcryptjs";
 import logger from "../logger/logger"
@@ -33,15 +33,24 @@ export const initDB = async (): Promise<Database> => {
                 user_id TEXT NOT NULL,
                 filename TEXT NOT NULL,
                 filepath TEXT NOT NULL,
-                parent_id INTEGER,
                 size INTEGER,
                 type TEXT,
                 uploaded_time DATETIME DEFAULT CURRENT_TIMESTAMP,
                 created_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-                is_deleted BOOLEAN DEFAULT 0,
-                FOREIGN KEY (parent_id) REFERENCES files(id) ON DELETE CASCADE
+                is_deleted BOOLEAN DEFAULT 0
             );
         `);
+
+        // Protected file table
+        await newDB.exec(`
+            CREATE TABLE IF NOT EXISTS protected_files (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                file_id INTEGER NOT NULL,
+                password_hash TEXT,
+                FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE
+            );
+        `);
+
         // User table
         await newDB.exec(`
             CREATE TABLE IF NOT EXISTS users (
@@ -122,9 +131,9 @@ export const FileHandler = {
         db = await initDB();
         try {
             const result = await db.run(
-                `INSERT INTO files (user_id, filename, filepath, size, type, parent_id)
-                 VALUES (?, ?, ?, ?, ?, ?)`,
-                [file.user_id, file.filename, file.filepath, file.size, file.type, file.parent_id]
+                `INSERT INTO files (user_id, filename, filepath, size, type)
+                 VALUES (?, ?, ?, ?, ?)`,
+                [file.user_id, file.filename, file.filepath, file.size, file.type]
             );
             if (!result.lastID) {
                 throw new Error('Insert failed. No lastID return');
@@ -172,7 +181,7 @@ export const FileHandler = {
     // Given path return files in query path
     getFilesByPath: async (user_id: string, queryPath: string): Promise<FileRecord[]> => {
         db = await initDB();
-        
+
         const files = await db.all<FileRecord[]>(
             `SELECT * FROM files WHERE user_id = ? AND 
             filepath = ? AND is_deleted = 0 ORDER BY uploaded_time DESC`,
@@ -235,6 +244,76 @@ export const FileHandler = {
         );
     },
 };
+
+export const ProtectFileHandler = {
+    async setProtection(file_id: number, passwordHash: string) {
+        const db = await initDB();
+
+        // 检查是否存在
+        const existing = await this.isProtected(file_id);
+
+        if (existing) {
+            throw new Error(`Fail to insert protected file record ${file_id}. Already existed`);            
+        } else {
+            const result = await db.run(
+                `INSERT INTO protected_files (file_id, password_hash) VALUES (?, ?)`,
+                [file_id, passwordHash]
+            );
+            return result.lastID;
+        }
+    },
+
+    // 移除保护
+    async removeProtection(file_id: number) {
+        const db = await initDB();
+        const result = await db.run(
+            `DELETE FROM protected_files WHERE file_id = ?`,
+            [file_id]
+        );
+        return result.changes! > 0;
+    },
+
+    // 检查文件是否受保护
+    async isProtected(file_id: number): Promise<boolean> {
+        db = await initDB();
+        const result = await db.get(`SELECT 1 FROM protected_files WHERE file_id = ?`, [file_id]);
+        return !!result;
+    },
+
+    // 验证密码
+    async verify(file_id: number, password: string): Promise<boolean> {
+        db = await initDB();
+        const protected_file = await db.get<ProtectedFileRecord>(`
+            SELECT * FROM protected_files WHERE file_id = ?`, [file_id]
+        );
+        if (!protected_file) throw new Error(`File not in protected files. Do not have access control`);
+        const result = bcrypt.compare(password, protected_file.password_hash);
+        return result;
+    },
+
+    // 更新密码
+    async updatePassword(file_id: number, newPassword: string) {
+        const db = await initDB();
+
+        const protected_file = await db.get<ProtectedFileRecord>(
+            `SELECT * FROM protected_files WHERE file_id = ?`,
+            [file_id]
+        );
+        if (!protected_file) {
+            throw new Error(`Update failed: file_id ${file_id} not found in protected_files`);
+        }
+
+        const passwordHash = await bcrypt.hash(newPassword, 10);
+
+        const result = await db.run(
+            `UPDATE protected_files SET password_hash = ? WHERE file_id = ?`,
+            [passwordHash, file_id]
+        );
+
+        return result.changes! > 0;
+    }
+};
+
 
 export const UserHandler = {
     // 插入用户record

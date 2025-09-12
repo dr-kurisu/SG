@@ -9,8 +9,6 @@ export interface FileRecord {
     updated_time?: string,
     is_deleted?: boolean,
     permission?: number,
-    require_password?: boolean,
-    parent_id?: number,
 }
 
 export interface FileItem {
@@ -19,6 +17,12 @@ export interface FileItem {
     type: string,
     modifiedTime?: string,
     permission?: number,
+}
+
+export interface ProtectedFileRecord {
+    id?: number,
+    file_id: number,
+    password_hash: string
 }
 
 export interface UserRecord {

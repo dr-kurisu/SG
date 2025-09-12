@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx watch src/routes/index.ts",
-    "test": "cross-env NODE_ENV=test jest --runInBand --verbose"
+    "test": "cross-env NODE_ENV=test jest --runInBand --verbose",
+    "test:coverage": "jest --coverage"
   },
   "keywords": [],
   "author": "",
